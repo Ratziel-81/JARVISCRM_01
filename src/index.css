@@ -203,3 +203,295 @@ body {
 ::selection {
   background: rgba(34, 211, 238, 0.3);
 }
+
+/* ================================================================
+   FASE 2 — Sistema de skins (aditivo: JARVIS DARK no cambia)
+   :root            = JARVIS DARK (valores del diseño actual)
+   [data-theme="neumorphism-01"] = NEUROMORPHISM_01 (tema claro)
+   ================================================================ */
+
+:root {
+  color-scheme: dark;
+
+  --jarvis-bg: #020812;
+  --jarvis-surface: #061a2b;
+  --jarvis-surface-2: #0a2438;
+  --jarvis-surface-light: #0e2c44;
+  --jarvis-panel-gradient: linear-gradient(160deg, rgba(10, 36, 56, 0.85), rgba(4, 19, 33, 0.92));
+
+  --jarvis-text: #dbeafe;
+  --jarvis-text-secondary: #94a3b8;
+  --jarvis-text-muted: #64748b;
+
+  --jarvis-primary: #2f7bff;
+  --jarvis-cyan: #22d3ee;
+  --jarvis-cyan-soft: #a5e8ff;
+
+  --jarvis-success: #34d399;
+  --jarvis-warning: #fbbf24;
+  --jarvis-danger: #f87171;
+
+  --jarvis-line: rgba(103, 232, 249, 0.14);
+  --jarvis-line-soft: rgba(103, 232, 249, 0.08);
+  --jarvis-input-bg: rgba(255, 255, 255, 0.04);
+
+  --jarvis-radius-sm: 10px;
+  --jarvis-radius-md: 16px;
+  --jarvis-radius-lg: 22px;
+  --jarvis-radius-xl: 28px;
+
+  --jarvis-transition: 220ms ease;
+
+  --jarvis-shadow-raised:
+    0 18px 50px -18px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(165, 232, 255, 0.06);
+  --jarvis-shadow-raised-sm:
+    0 10px 28px -12px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0 rgba(165, 232, 255, 0.06);
+  --jarvis-shadow-inset:
+    inset 0 2px 8px rgba(0, 0, 0, 0.45),
+    inset 0 -1px 0 rgba(165, 232, 255, 0.05);
+  --jarvis-shadow-glow:
+    0 0 24px -6px rgba(34, 211, 238, 0.45);
+}
+
+/* ---------- NEUROMORPHISM_01 ---------- */
+[data-theme="neumorphism-01"] {
+  color-scheme: light;
+
+  --jarvis-bg: #E8EDF3;
+  --jarvis-surface: #E8EDF3;
+  --jarvis-surface-2: #E8EDF3;
+  --jarvis-surface-light: #F4F7FA;
+  --jarvis-panel-gradient: linear-gradient(160deg, #EDF1F6, #E2E8F0);
+
+  --jarvis-text: #29415D;
+  --jarvis-text-secondary: #71839A;
+  --jarvis-text-muted: #93A2B5;
+
+  --jarvis-primary: #329FE0;
+  --jarvis-cyan: #42C7E8;
+  --jarvis-cyan-soft: #A8E8F8;
+
+  --jarvis-success: #36B99A;
+  --jarvis-warning: #E8B44D;
+  --jarvis-danger: #E77F8B;
+
+  --jarvis-line: rgba(255, 255, 255, 0.75);
+  --jarvis-line-soft: rgba(41, 65, 93, 0.08);
+  --jarvis-input-bg: #E8EDF3;
+
+  --jarvis-radius-sm: 10px;
+  --jarvis-radius-md: 16px;
+  --jarvis-radius-lg: 22px;
+  --jarvis-radius-xl: 28px;
+
+  --jarvis-transition: 220ms ease;
+
+  --jarvis-shadow-raised:
+    7px 7px 16px rgba(163, 177, 198, 0.42),
+    -7px -7px 16px rgba(255, 255, 255, 0.92);
+  --jarvis-shadow-raised-sm:
+    4px 4px 9px rgba(163, 177, 198, 0.34),
+    -4px -4px 9px rgba(255, 255, 255, 0.9);
+  --jarvis-shadow-inset:
+    inset 4px 4px 9px rgba(163, 177, 198, 0.35),
+    inset -4px -4px 9px rgba(255, 255, 255, 0.9);
+  --jarvis-shadow-glow:
+    0 0 18px rgba(50, 159, 224, 0.16);
+
+  /* Remapeo Tailwind v4: text-*/bg-*/border-* leen estas variables,
+     cientos de clases existentes se adaptan sin reescribir JSX.
+     (white/black/bordes blancos: sustitución manual en FASE 3–6.) */
+  /* escala de texto: claro sobre oscuro -> azul grisáceo sobre claro */
+  --color-slate-100: #29415D;
+  --color-slate-200: #3E5875;
+  --color-slate-300: #5B7691;
+  --color-slate-400: #71839A;
+  --color-slate-500: #93A2B5;
+  --color-slate-600: #A9B7C6;
+
+  /* acentos cian -> azules legibles sobre claro */
+  --color-cyan-100: #1F7AB5;
+  --color-cyan-200: #2B93CC;
+  --color-cyan-300: #329FE0;
+  --color-cyan-400: #42C7E8;
+
+  /* estados: versiones sobrias sobre fondo claro */
+  --color-emerald-200: #178A6B;
+  --color-emerald-300: #1FA37E;
+  --color-emerald-400: #36B99A;
+  --color-amber-300: #D19A2B;
+  --color-amber-400: #E8B44D;
+  --color-red-200: #C65B68;
+  --color-red-300: #D96A78;
+  --color-red-400: #E77F8B;
+  --color-red-500: #D95363;
+  --color-violet-300: #8B7CF0;
+  --color-violet-400: #7C6FF0;
+  --color-sky-300: #3FA9DC;
+  --color-sky-400: #329FE0;
+  --color-teal-300: #1FA893;
+  --color-teal-400: #2BB5A0;
+}
+
+/* ================================================================
+   Clases semánticas reutilizables (ambos temas vía variables).
+   FASE 2 solo las DEFINE; se aplican en JSX en FASE 3–6.
+   ================================================================ */
+
+.jarvis-surface {
+  background: var(--jarvis-surface);
+  color: var(--jarvis-text);
+}
+
+.jarvis-card {
+  background: var(--jarvis-panel-gradient, var(--jarvis-surface));
+  border: 1px solid var(--jarvis-line);
+  border-radius: var(--jarvis-radius-md);
+  box-shadow: var(--jarvis-shadow-raised);
+  color: var(--jarvis-text);
+  transition: transform var(--jarvis-transition), border-color var(--jarvis-transition), box-shadow var(--jarvis-transition);
+}
+
+.jarvis-card-inset {
+  background: var(--jarvis-surface);
+  border: 1px solid var(--jarvis-line-soft);
+  border-radius: var(--jarvis-radius-md);
+  box-shadow: var(--jarvis-shadow-inset);
+  color: var(--jarvis-text);
+}
+
+.jarvis-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--jarvis-line);
+  border-radius: 12px;
+  background: var(--jarvis-surface);
+  box-shadow: var(--jarvis-shadow-raised-sm);
+  color: var(--jarvis-text);
+  font-weight: 600;
+  padding: 0.625rem 1rem;
+  transition: transform var(--jarvis-transition), box-shadow var(--jarvis-transition), border-color var(--jarvis-transition), opacity var(--jarvis-transition);
+  cursor: pointer;
+}
+.jarvis-button:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--jarvis-shadow-raised), var(--jarvis-shadow-glow);
+}
+.jarvis-button:active {
+  transform: translateY(0);
+  box-shadow: var(--jarvis-shadow-inset);
+}
+.jarvis-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.jarvis-button-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: var(--jarvis-primary);
+  box-shadow: var(--jarvis-shadow-raised-sm), var(--jarvis-shadow-glow);
+  color: #fff;
+  font-weight: 600;
+  padding: 0.625rem 1rem;
+  transition: transform var(--jarvis-transition), box-shadow var(--jarvis-transition), filter var(--jarvis-transition), opacity var(--jarvis-transition);
+  cursor: pointer;
+}
+.jarvis-button-primary:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+}
+.jarvis-button-primary:active {
+  transform: translateY(0);
+  box-shadow: var(--jarvis-shadow-inset);
+}
+.jarvis-button-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.jarvis-input {
+  width: 100%;
+  border: 1px solid var(--jarvis-line-soft);
+  border-radius: 12px;
+  background: var(--jarvis-input-bg);
+  box-shadow: var(--jarvis-shadow-inset);
+  color: var(--jarvis-text);
+  padding: 0.625rem 0.75rem;
+  outline: none;
+  transition: border-color var(--jarvis-transition), box-shadow var(--jarvis-transition);
+}
+.jarvis-input::placeholder {
+  color: var(--jarvis-text-muted);
+}
+.jarvis-input:focus {
+  border-color: var(--jarvis-primary);
+  box-shadow: var(--jarvis-shadow-inset), var(--jarvis-shadow-glow);
+}
+.jarvis-input:disabled {
+  opacity: 0.5;
+}
+
+.jarvis-badge {
+  display: inline-block;
+  white-space: nowrap;
+  border: 1px solid var(--jarvis-line);
+  border-radius: 999px;
+  padding: 0.125rem 0.5rem;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--jarvis-text-secondary);
+  background: var(--jarvis-surface);
+}
+
+.jarvis-section-title {
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--jarvis-cyan);
+  font-weight: 600;
+}
+[data-theme="neumorphism-01"] .jarvis-section-title {
+  color: var(--jarvis-primary);
+}
+
+.jarvis-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--jarvis-line);
+  border-radius: 10px;
+  background: var(--jarvis-surface);
+  box-shadow: var(--jarvis-shadow-raised-sm);
+  color: var(--jarvis-text-secondary);
+  padding: 0.5rem;
+  transition: color var(--jarvis-transition), border-color var(--jarvis-transition), box-shadow var(--jarvis-transition), opacity var(--jarvis-transition);
+  cursor: pointer;
+}
+.jarvis-icon-button:hover {
+  color: var(--jarvis-primary);
+  box-shadow: var(--jarvis-shadow-raised-sm), var(--jarvis-shadow-glow);
+}
+.jarvis-icon-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* foco visible accesible en ambos temas */
+.jarvis-button:focus-visible,
+.jarvis-button-primary:focus-visible,
+.jarvis-input:focus-visible,
+.jarvis-icon-button:focus-visible,
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--jarvis-primary);
+  outline-offset: 2px;
+}
