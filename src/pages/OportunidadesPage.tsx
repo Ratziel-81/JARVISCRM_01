@@ -283,6 +283,14 @@ export default function OportunidadesPage() {
                 <tr
                   key={o.id}
                   onClick={() => setSelectedId(o.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setSelectedId(o.id);
+                    }
+                  }}
+                  tabIndex={0}
+                  aria-label={`Oportunidad ${o.empresa}`}
                   className="cursor-pointer border-b border-white/5 transition last:border-0 hover:bg-cyan-300/[.04]"
                 >
                   <td className="px-4 py-2.5 font-semibold text-slate-100">{o.empresa}</td>
@@ -347,6 +355,15 @@ export default function OportunidadesPage() {
                           setColOver(null);
                         }}
                         onClick={() => setSelectedId(o.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setSelectedId(o.id);
+                          }
+                        }}
+                        tabIndex={0}
+                        role="button"
+                        aria-label={`Oportunidad ${o.empresa}`}
                         className={`cursor-pointer rounded-xl border border-white/[.07] bg-white/[.02] p-3 transition hover:border-cyan-300/30 hover:bg-cyan-300/[.05] ${
                           dragId === o.id ? "opacity-40" : ""
                         } ${terminal ? "opacity-75" : ""}`}

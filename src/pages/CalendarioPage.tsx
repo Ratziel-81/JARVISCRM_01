@@ -295,6 +295,15 @@ export default function CalendarioPage() {
           e.stopPropagation();
           abrirEdicion(a);
         }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            abrirEdicion(a);
+          }
+        }}
+        tabIndex={0}
+        role="button"
+        aria-label={`${a.titulo} ${a.hora}`}
         title={`${a.titulo} · ${a.hora}–${fin} (${dur} min) · clic para editar, arrastra para mover`}
         className={`jarvis-event group absolute inset-x-1 cursor-grab overflow-hidden rounded-lg border border-cyan-300/25 px-2 py-1 backdrop-blur transition hover:border-cyan-300/60 active:cursor-grabbing ${
           a.estado !== "Pendiente" ? "opacity-60" : ""
@@ -318,13 +327,13 @@ export default function CalendarioPage() {
     );
   }
 
-  function ColumnaDia({ dayISO, conCabecera }: { dayISO: string; conCabecera: boolean }) {
+  function ColumnaDia({ dayISO, conCabecera, anchoMin }: { dayISO: string; conCabecera: boolean; anchoMin?: boolean }) {
     const d = desdeISO(dayISO);
     const esHoy = dayISO === HOY;
     const evs = porDia.get(dayISO) ?? [];
     const ahoraMin = ahora.getHours() * 60 + ahora.getMinutes();
     return (
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className={`flex flex-1 flex-col ${anchoMin ? "min-w-[150px] md:min-w-0" : "min-w-0"}`}>
         {conCabecera && (
           <div className={`mb-1 rounded-xl border px-2 py-1.5 text-center ${esHoy ? "border-cyan-300/50 bg-cyan-300/10" : "border-white/5 bg-white/[.02]"}`}>
             <p className={`font-mono text-[10px] uppercase tracking-widest ${esHoy ? "text-cyan-200" : "text-slate-500"}`}>
@@ -459,6 +468,15 @@ export default function CalendarioPage() {
                           e.stopPropagation();
                           abrirEdicion(a);
                         }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            abrirEdicion(a);
+                          }
+                        }}
+                        tabIndex={0}
+                        role="button"
+                        aria-label={`${a.hora} ${a.titulo}`}
                         className="truncate rounded-md border border-cyan-300/20 bg-cyan-300/[.07] px-1.5 py-0.5 text-[10px] text-slate-200"
                         title={`${a.hora} · ${a.titulo}`}
                       >
@@ -475,7 +493,7 @@ export default function CalendarioPage() {
       ) : (
         <div className="jarvis-panel flex gap-2 overflow-x-auto p-3">
           {dias.map((dayISO) => (
-            <ColumnaDia key={dayISO} dayISO={dayISO} conCabecera={vista === "semana" || dias.length === 1} />
+            <ColumnaDia key={dayISO} dayISO={dayISO} conCabecera={vista === "semana" || dias.length === 1} anchoMin={vista === "semana"} />
           ))}
         </div>
       )}

@@ -10,6 +10,7 @@ import {
 } from "../data/mockData";
 import { api } from "../lib/api";
 import { fmtFecha } from "../lib/cobertura";
+import { useSkin } from "../lib/skin";
 
 type FiltroEstado = "Todas" | "Pendientes" | "Hechas" | "Canceladas";
 type FiltroVence = "Todas" | "Atrasadas" | "Hoy" | "Esta semana" | "Sin fecha";
@@ -21,11 +22,13 @@ const HOY = (() => {
 })();
 
 const PESO_PRIORIDAD: Record<Prioridad, number> = { Alta: 0, Media: 1, Baja: 2 };
-const BORDE_PRIORIDAD: Record<Prioridad, string> = {
-  Alta: "border-l-red-400/70",
-  Media: "border-l-amber-300/70",
-  Baja: "border-l-emerald-300/50",
-};
+// Franja lateral por prioridad con estilo inline: las clases de borde en capas
+// de Tailwind pierden contra .jarvis-panel (sin capa) y la franja no se veía.
+// Mapa por tema para que lea bien en ambos.
+function colorFranja(p: Prioridad, claro: boolean): string {
+  if (claro) return p === "Alta" ? "#E77F8B" : p === "Media" ? "#E8B44D" : "#36B99A";
+  return p === "Alta" ? "#f87171" : p === "Media" ? "#fbbf24" : "#34d399";
+}
 
 function esAtrasada(a: Accion): boolean {
   return !!a.fecha && a.fecha < HOY && a.estado === "Pendiente";
@@ -114,6 +117,8 @@ export default function TareasPage() {
   }, []);
 
   const selected = useMemo(() => tareas.find((t) => t.id === selectedId) ?? null, [tareas, selectedId]);
+  const { skin } = useSkin();
+  const claro = skin === "neumorphism-01";
 
   function abrirDetalle(t: Accion) {
     setEdit({
@@ -418,7 +423,17 @@ export default function TareasPage() {
               <li
                 key={t.id}
                 onClick={() => abrirDetalle(t)}
-                className={`jarvis-panel jarvis-panel-hover cursor-pointer border-l-4 p-4 ${BORDE_PRIORIDAD[t.prioridad ?? "Media"]}`}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    abrirDetalle(t);
+                  }
+                }}
+                tabIndex={0}
+                role="button"
+                aria-label={`Tarea ${t.titulo}`}
+                className="jarvis-panel jarvis-panel-hover cursor-pointer p-4"
+                style={{ borderLeft: `4px solid ${colorFranja(t.prioridad ?? "Media", claro)}` }}
               >
                 <div className="flex items-start gap-3">
                   <button

@@ -332,6 +332,15 @@ export default function AccionesPage() {
               <li
                 key={a.id}
                 onClick={() => abrirDetalle(a)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    abrirDetalle(a);
+                  }
+                }}
+                tabIndex={0}
+                role="button"
+                aria-label={`Acción ${a.titulo}`}
                 className="flex cursor-pointer items-start gap-3 px-4 py-3 transition hover:bg-cyan-300/[.04]"
               >
                 <span className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border ${TIPO_COLOR[a.tipo] ?? TIPO_COLOR.tarea}`}>
