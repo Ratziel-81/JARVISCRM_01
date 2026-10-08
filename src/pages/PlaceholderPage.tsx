@@ -19,7 +19,7 @@ export default function PlaceholderPage({
             <Icon size={34} strokeWidth={1.6} />
           </div>
           <p className="mt-5 font-mono text-[11px] tracking-[0.3em] text-cyan-300/70">MÓDULO {titulo.toUpperCase()}</p>
-          <h1 className="mt-2 text-2xl font-extrabold text-white sm:text-3xl">{titulo}</h1>
+          <h1 className="mt-2 text-2xl font-extrabold text-slate-100 sm:text-3xl">{titulo}</h1>
           <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-slate-300">
             J.A.R.V.I.S. está preparando este módulo… {descrip}
           </p>

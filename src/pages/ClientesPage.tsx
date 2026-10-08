@@ -34,7 +34,7 @@ function Avatar({ c, size = "md" }: { c: Cliente; size?: "sm" | "md" | "lg" }) {
   const cls = size === "lg" ? "h-14 w-14 text-base" : size === "sm" ? "h-8 w-8 text-[11px]" : "h-10 w-10 text-xs";
   return (
     <span
-      className={`flex shrink-0 items-center justify-center rounded-full font-bold text-white ${cls}`}
+      className={`flex shrink-0 items-center justify-center rounded-full font-bold text-slate-100 ${cls}`}
       style={{ background: `linear-gradient(135deg, ${c.avatarColor}, #0b1526)` }}
       aria-hidden
     >
@@ -202,7 +202,7 @@ export default function ClientesPage() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="font-mono text-[11px] tracking-[0.3em] text-cyan-300/70">MÓDULO CLIENTES</p>
-          <h1 className="mt-1 text-2xl font-extrabold text-white">Clientes</h1>
+          <h1 className="mt-1 text-2xl font-extrabold text-slate-100">Clientes</h1>
           <p className="mt-1 text-sm text-slate-400">
             {cargando ? "Sincronizando…" : `${filtrados.length} de ${clientes.length} clientes · Cartera ${formatEur(totalCartera)}`}
             {!cargando && desatendidos > 0 && <span className="ml-2 font-semibold text-red-300">· {desatendidos} desatendidos</span>}
@@ -369,7 +369,7 @@ export default function ClientesPage() {
                   <div className="flex items-center gap-3">
                     <Avatar c={c} size="lg" />
                     <div className="min-w-0">
-                      <h3 className="truncate font-bold text-white">{c.nombre}</h3>
+                      <h3 className="truncate font-bold text-slate-100">{c.nombre}</h3>
                       <p className="truncate text-xs text-slate-400">{c.empresa}</p>
                     </div>
                   </div>

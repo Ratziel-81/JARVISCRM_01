@@ -118,7 +118,7 @@ export default function OfertasPage() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="font-mono text-[11px] tracking-[0.3em] text-cyan-300/70">PRESUPUESTOS</p>
-          <h1 className="mt-1 text-2xl font-extrabold text-white">Ofertas</h1>
+          <h1 className="mt-1 text-2xl font-extrabold text-slate-100">Ofertas</h1>
           <p className="mt-1 text-sm text-slate-400">
             {cargando
               ? "Sincronizando…"
@@ -214,7 +214,7 @@ export default function OfertasPage() {
                   {op ? (
                     <Link
                       to={`/oportunidades?sel=${op.id}`}
-                      className="flex items-center gap-1 text-xs font-bold text-cyan-200 transition hover:text-white"
+                      className="flex items-center gap-1 text-xs font-bold text-cyan-200 transition hover:text-slate-100"
                     >
                       {op.empresa} <ArrowRight size={12} />
                     </Link>

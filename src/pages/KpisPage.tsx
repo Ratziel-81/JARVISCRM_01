@@ -14,7 +14,9 @@ import {
 } from "recharts";
 import { formatEur, type Accion, type Cliente, type Oferta, type Oportunidad } from "../data/mockData";
 import { api } from "../lib/api";
+import { chartTema } from "../lib/chartTheme";
 import { estadoCobertura } from "../lib/cobertura";
+import { useSkin } from "../lib/skin";
 
 const PALETA = ["#22d3ee", "#2f7bff", "#a78bfa", "#f5c542", "#2dd4bf", "#ff5470", "#94a3b8"];
 
@@ -22,7 +24,7 @@ function Tarjeta({ titulo, valor, sub, to }: { titulo: string; valor: string; su
   const inner = (
     <>
       <p className="section-title">{titulo}</p>
-      <p className="num-display mt-2 text-2xl font-extrabold text-white sm:text-3xl">{valor}</p>
+      <p className="num-display mt-2 text-2xl font-extrabold text-slate-100 sm:text-3xl">{valor}</p>
       <p className="mt-1 text-xs text-slate-400">{sub}</p>
     </>
   );
@@ -33,10 +35,12 @@ function Tarjeta({ titulo, valor, sub, to }: { titulo: string; valor: string; su
   );
 }
 
-const tooltipOscuro = {
-  contentStyle: { background: "#041321", border: "1px solid rgba(103,232,249,.25)", borderRadius: 10, fontSize: 12 },
-  labelStyle: { color: "#a5e8ff" },
-};
+function usoTooltip(ct: ReturnType<typeof chartTema>) {
+  return {
+    contentStyle: { background: ct.tooltipBg, border: `1px solid ${ct.tooltipBorde}`, borderRadius: 10, fontSize: 12 },
+    labelStyle: { color: ct.tooltipTexto },
+  };
+}
 
 export default function KpisPage() {
   const [ops, setOps] = useState<Oportunidad[]>([]);
@@ -44,6 +48,9 @@ export default function KpisPage() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [acciones, setAcciones] = useState<Accion[]>([]);
   const [cargando, setCargando] = useState(true);
+  const { skin } = useSkin();
+  const ct = chartTema(skin);
+  const tip = usoTooltip(ct);
 
   useEffect(() => {
     let vivo = true;
@@ -113,7 +120,7 @@ export default function KpisPage() {
     <div className="anim-rise space-y-4">
       <div>
         <p className="font-mono text-[11px] tracking-[0.3em] text-cyan-300/70">RENDIMIENTO</p>
-        <h1 className="mt-1 text-2xl font-extrabold text-white">KPIs Comerciales</h1>
+        <h1 className="mt-1 text-2xl font-extrabold text-slate-100">KPIs Comerciales</h1>
         <p className="mt-1 text-sm text-slate-400">{cargando ? "Sincronizando…" : "Calculados en tiempo real sobre tu base de datos"}</p>
       </div>
 
@@ -141,10 +148,10 @@ export default function KpisPage() {
               <div className="mt-3 h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={k.embudo} layout="vertical" margin={{ top: 0, right: 12, bottom: 0, left: 8 }}>
-                    <CartesianGrid stroke="rgba(103,232,249,.08)" horizontal={false} />
-                    <XAxis type="number" tick={{ fill: "#7d8aa0", fontSize: 11 }} axisLine={false} tickLine={false} />
-                    <YAxis type="category" dataKey="nombre" width={100} tick={{ fill: "#a5e8ff", fontSize: 11 }} axisLine={false} tickLine={false} />
-                    <Tooltip {...tooltipOscuro} formatter={(v, _n, p) => [`€${Number(v).toLocaleString("es-ES")}k · ${p?.payload?.n ?? 0} ops`, "Pipeline"]} />
+                    <CartesianGrid stroke={ct.rejilla} horizontal={false} />
+                    <XAxis type="number" tick={{ fill: ct.tick, fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <YAxis type="category" dataKey="nombre" width={100} tick={{ fill: ct.etiqueta, fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <Tooltip {...tip} formatter={(v, _n, p) => [`€${Number(v).toLocaleString("es-ES")}k · ${p?.payload?.n ?? 0} ops`, "Pipeline"]} />
                     <Bar dataKey="valor" radius={[0, 6, 6, 0]}>
                       {k.embudo.map((_, i) => (
                         <Cell key={i} fill={PALETA[i % PALETA.length]} />
@@ -165,7 +172,7 @@ export default function KpisPage() {
                         <Cell key={i} fill={PALETA[i % PALETA.length]} />
                       ))}
                     </Pie>
-                    <Tooltip {...tooltipOscuro} />
+                    <Tooltip {...tip} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>

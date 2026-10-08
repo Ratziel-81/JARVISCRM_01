@@ -303,7 +303,7 @@ export default function TareasPage() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="font-mono text-[11px] tracking-[0.3em] text-cyan-300/70">SEGUIMIENTO</p>
-          <h1 className="mt-1 text-2xl font-extrabold text-white">Tareas</h1>
+          <h1 className="mt-1 text-2xl font-extrabold text-slate-100">Tareas</h1>
           <p className="mt-1 text-sm text-slate-400">
             {cargando ? "Sincronizando…" : `${stats.hechas} de ${stats.total} completadas`}
             {!cargando && stats.atrasadas > 0 && <span className="ml-2 font-semibold text-red-300">· {stats.atrasadas} atrasadas</span>}
@@ -322,7 +322,7 @@ export default function TareasPage() {
       </div>
       {!cargando && (
         <div className="jarvis-panel flex items-center gap-3 p-4">
-          <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-white/10">
+          <div className="jarvis-track h-2.5 flex-1 overflow-hidden rounded-full">
             <div
               className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400 transition-all"
               style={{ width: `${stats.pct}%` }}
@@ -438,7 +438,7 @@ export default function TareasPage() {
                   </button>
                   <div className="min-w-0 flex-1">
                     <p className="flex flex-wrap items-center gap-2">
-                      <span className={`truncate text-[15px] font-bold ${hecha ? "text-slate-500 line-through" : "text-white"}`}>
+                      <span className={`truncate text-[15px] font-bold ${hecha ? "text-slate-500 line-through" : "text-slate-100"}`}>
                         {t.titulo}
                       </span>
                       <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${PRIORIDAD_STYLES[t.prioridad ?? "Media"]}`}>

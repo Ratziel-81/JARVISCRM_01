@@ -857,3 +857,56 @@ button:focus-visible {
   box-shadow: var(--jarvis-shadow-inset);
   color: var(--jarvis-primary);
 }
+
+/* ================================================================
+   FASE 6 — Páginas: paneles, bordes blancos, formularios, eventos.
+   Solo reglas bajo [data-theme]: el dark no cambia.
+   ================================================================ */
+
+/* superficies de panel en claro (filtros, tablas, modales, tarjetas) */
+[data-theme="neumorphism-01"] .jarvis-panel {
+  background: var(--jarvis-panel-gradient);
+  border: 1px solid var(--jarvis-line);
+  border-radius: var(--jarvis-radius-md);
+  box-shadow: var(--jarvis-shadow-raised);
+  color: var(--jarvis-text);
+}
+[data-theme="neumorphism-01"] .jarvis-panel-hover:hover {
+  transform: translateY(-2px);
+  border-color: rgba(50, 159, 224, 0.45);
+  box-shadow: var(--jarvis-shadow-raised), var(--jarvis-shadow-glow);
+}
+
+/* bordes blancos translúcidos -> gris azulado en claro */
+[data-theme="neumorphism-01"] [class*="border-white/"] {
+  border-color: rgba(41, 65, 93, 0.14);
+}
+[data-theme="neumorphism-01"] [class*="divide-white"] > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(41, 65, 93, 0.1);
+}
+
+/* campos de formulario en claro (los excluding no tocan color/file/checkbox) */
+[data-theme="neumorphism-01"] input:not([type="checkbox"]):not([type="color"]):not([type="file"]):not([type="range"]):not([type="submit"]):not([type="button"]):not([type="hidden"]),
+[data-theme="neumorphism-01"] textarea,
+[data-theme="neumorphism-01"] select {
+  background-color: var(--jarvis-input-bg);
+  box-shadow: var(--jarvis-shadow-inset);
+  color: var(--jarvis-text);
+}
+[data-theme="neumorphism-01"] select {
+  background-color: var(--jarvis-surface-light);
+  box-shadow: var(--jarvis-shadow-raised-sm);
+}
+[data-theme="neumorphism-01"] input::placeholder,
+[data-theme="neumorphism-01"] textarea::placeholder {
+  color: var(--jarvis-text-muted);
+}
+
+/* bloque de evento del calendario */
+.jarvis-event {
+  background: rgba(10, 36, 56, 0.95);
+}
+[data-theme="neumorphism-01"] .jarvis-event {
+  background: #ffffff;
+  box-shadow: var(--jarvis-shadow-raised-sm);
+}

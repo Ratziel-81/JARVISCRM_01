@@ -296,7 +296,7 @@ export default function CalendarioPage() {
           abrirEdicion(a);
         }}
         title={`${a.titulo} · ${a.hora}–${fin} (${dur} min) · clic para editar, arrastra para mover`}
-        className={`group absolute inset-x-1 cursor-grab overflow-hidden rounded-lg border border-cyan-300/25 bg-[#0a2438]/95 px-2 py-1 backdrop-blur transition hover:border-cyan-300/60 active:cursor-grabbing ${
+        className={`jarvis-event group absolute inset-x-1 cursor-grab overflow-hidden rounded-lg border border-cyan-300/25 px-2 py-1 backdrop-blur transition hover:border-cyan-300/60 active:cursor-grabbing ${
           a.estado !== "Pendiente" ? "opacity-60" : ""
         }`}
         style={{ top, height }}
@@ -330,7 +330,7 @@ export default function CalendarioPage() {
             <p className={`font-mono text-[10px] uppercase tracking-widest ${esHoy ? "text-cyan-200" : "text-slate-500"}`}>
               {NOM_DIAS[(d.getDay() + 6) % 7]}
             </p>
-            <p className={`text-lg font-extrabold leading-none ${esHoy ? "text-white" : "text-slate-300"}`}>{d.getDate()}</p>
+            <p className={`text-lg font-extrabold leading-none ${esHoy ? "text-slate-100" : "text-slate-300"}`}>{d.getDate()}</p>
           </div>
         )}
         <div
@@ -378,7 +378,7 @@ export default function CalendarioPage() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="font-mono text-[11px] tracking-[0.3em] text-cyan-300/70">CALENDARIO</p>
-          <h1 className="mt-1 text-2xl font-extrabold capitalize text-white">{titulo}</h1>
+          <h1 className="mt-1 text-2xl font-extrabold capitalize text-slate-100">{titulo}</h1>
           <p className="mt-1 font-mono text-[11px] text-slate-500">
             Arrastra para mover · tira del borde inferior para alargar · doble clic para crear · clic para editar
           </p>

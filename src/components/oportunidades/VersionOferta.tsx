@@ -31,7 +31,7 @@ const TRANSICION_LABEL: Record<EstadoOferta, string> = {
 
 const btnBase =
   "flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold transition disabled:opacity-40";
-export const btnGhost = `${btnBase} border-white/10 bg-white/[.02] text-slate-300 hover:border-cyan-300/40 hover:text-white`;
+export const btnGhost = `${btnBase} border-white/10 bg-white/[.02] text-slate-300 hover:border-cyan-300/40 hover:text-slate-100`;
 
 interface Props {
   of: Oferta;

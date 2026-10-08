@@ -108,7 +108,7 @@ export default function ConfiguracionPage() {
     <div className="anim-rise space-y-4">
       <div>
         <p className="font-mono text-[11px] tracking-[0.3em] text-cyan-300/70">AJUSTES</p>
-        <h1 className="mt-1 text-2xl font-extrabold text-white">Configuración</h1>
+        <h1 className="mt-1 text-2xl font-extrabold text-slate-100">Configuración</h1>
         <p className="mt-1 text-sm text-slate-400">{cargando ? "Sincronizando…" : "Apariencia, etapas del pipeline y tipos de cobertura"}</p>
       </div>
 
@@ -146,7 +146,7 @@ export default function ConfiguracionPage() {
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-2">
-                    <span className="text-sm font-bold tracking-wide text-white">{s.nombre}</span>
+                    <span className="text-sm font-bold tracking-wide text-slate-100">{s.nombre}</span>
                     {activo && (
                       <span className="rounded-full border border-cyan-300/50 bg-cyan-300/15 px-2 py-0.5 font-mono text-[10px] font-bold tracking-widest text-cyan-100">
                         ACTIVO

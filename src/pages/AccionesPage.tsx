@@ -241,7 +241,7 @@ export default function AccionesPage() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="font-mono text-[11px] tracking-[0.3em] text-cyan-300/70">ACTIVIDAD COMERCIAL</p>
-          <h1 className="mt-1 text-2xl font-extrabold text-white">Acciones</h1>
+          <h1 className="mt-1 text-2xl font-extrabold text-slate-100">Acciones</h1>
           <p className="mt-1 text-sm text-slate-400">
             {cargando ? "Sincronizando…" : `${filtradas.length} de ${acciones.length} acciones`}
             {!cargando && pendientes > 0 && <span className="ml-2 font-semibold text-amber-300">· {pendientes} pendientes</span>}
@@ -395,7 +395,7 @@ export default function AccionesPage() {
                   {(TIPO_ACCION_LABEL[selected.tipo] ?? selected.tipo).toUpperCase()} · {etiquetaFecha(selected.fecha).toUpperCase()}
                   {selected.hora ? ` ${selected.hora}` : ""}
                 </p>
-                <h2 className="mt-1 text-xl font-extrabold text-white">{selected.titulo}</h2>
+                <h2 className="mt-1 text-xl font-extrabold text-slate-100">{selected.titulo}</h2>
               </div>
               <button onClick={() => setSelectedId(null)} className="text-slate-500 hover:text-slate-200" aria-label="Cerrar">
                 <X size={18} />
@@ -480,7 +480,7 @@ export default function AccionesPage() {
             <div>
               <div className="flex items-center justify-between">
                 <h3 className="section-title">Fotos · {fotos.length}</h3>
-                <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-white/10 bg-white/[.02] px-2.5 py-1.5 text-[11px] font-semibold text-slate-300 transition hover:border-cyan-300/40 hover:text-white">
+                <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-white/10 bg-white/[.02] px-2.5 py-1.5 text-[11px] font-semibold text-slate-300 transition hover:border-cyan-300/40 hover:text-slate-100">
                   <ImagePlus size={13} /> {subiendo ? "Subiendo…" : "Añadir fotos"}
                   <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => subirFotos(e.target.files)} disabled={subiendo} />
                 </label>

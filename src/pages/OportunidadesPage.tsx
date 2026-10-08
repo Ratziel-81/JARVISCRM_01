@@ -186,7 +186,7 @@ export default function OportunidadesPage() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="font-mono text-[11px] tracking-[0.3em] text-cyan-300/70">PIPELINE COMERCIAL</p>
-          <h1 className="mt-1 text-2xl font-extrabold text-white">Oportunidades</h1>
+          <h1 className="mt-1 text-2xl font-extrabold text-slate-100">Oportunidades</h1>
           <p className="mt-1 text-sm text-slate-400">
             {cargando ? "Sincronizando…" : `${filtradas.length} oportunidades · ${formatEur(totalAbierto)} en abierto`}
           </p>
@@ -352,7 +352,7 @@ export default function OportunidadesPage() {
                         } ${terminal ? "opacity-75" : ""}`}
                       >
                         <div className="flex items-start justify-between gap-2">
-                          <p className="min-w-0 truncate text-sm font-bold text-white">{o.empresa}</p>
+                          <p className="min-w-0 truncate text-sm font-bold text-slate-100">{o.empresa}</p>
                           {(o.estado ?? "Abierta") !== "Abierta" && (
                             <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${ESTADO_OPORTUNIDAD_STYLES[o.estado!]}`}>
                               {o.estado === "Ganada" ? "Ganada" : "Perdida"}
@@ -360,7 +360,7 @@ export default function OportunidadesPage() {
                           )}
                         </div>
                         <p className="num-display mt-1 text-lg font-extrabold text-cyan-100">{formatEur(o.importe)}</p>
-                        <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/10">
+                        <div className="jarvis-track mt-2 h-1 overflow-hidden rounded-full">
                           <div className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-500" style={{ width: `${o.probabilidad}%` }} />
                         </div>
                         <div className="mt-2 flex items-center justify-between gap-2">
@@ -404,7 +404,7 @@ export default function OportunidadesPage() {
                 <p className="font-mono text-[11px] tracking-[0.3em] text-cyan-300/70">
                   OPORTUNIDAD · {selected.etapaNombre ?? selected.etapa}
                 </p>
-                <h2 className="mt-1 text-xl font-extrabold text-white">{selected.empresa}</h2>
+                <h2 className="mt-1 text-xl font-extrabold text-slate-100">{selected.empresa}</h2>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${ESTADO_OPORTUNIDAD_STYLES[selected.estado ?? "Abierta"]}`}>
                     {selected.estado ?? "Abierta"}
