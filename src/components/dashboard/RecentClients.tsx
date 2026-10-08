@@ -21,7 +21,7 @@ export default function RecentClients() {
   }, []);
 
   return (
-    <section className="jarvis-panel anim-rise stagger-5 h-full p-5" aria-label="Clientes recientes">
+    <section className="jarvis-card anim-rise stagger-5 h-full p-5" aria-label="Clientes recientes">
       <div className="flex items-center justify-between gap-2">
         <h2 className="section-title">Clientes Recientes</h2>
         <Link to="/clientes" className="flex items-center gap-1 text-xs font-semibold text-cyan-300 transition hover:text-cyan-100">
@@ -33,7 +33,7 @@ export default function RecentClients() {
           <li key={c.id}>
             <Link
               to="/clientes"
-              className="flex items-center gap-3 rounded-xl border border-white/[.07] bg-white/[.02] p-2.5 transition hover:border-cyan-300/30 hover:bg-cyan-300/[.05]"
+              className="jarvis-row flex items-center gap-3 rounded-xl p-2.5"
             >
               <span
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"

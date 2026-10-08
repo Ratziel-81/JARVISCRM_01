@@ -1,7 +1,7 @@
 export default function IntelligenceMap() {
   return (
     <section
-      className="jarvis-panel anim-rise stagger-6 relative flex h-full flex-col overflow-hidden p-5"
+      className="jarvis-card anim-rise stagger-6 relative flex h-full flex-col overflow-hidden p-5"
       aria-label="Inteligencia global"
     >
       <div className="tech-grid-bg absolute inset-0" aria-hidden />
@@ -38,8 +38,8 @@ export default function IntelligenceMap() {
           { v: "56", l: "Oportunidades" },
           { v: "€124.5k", l: "Ventas" },
         ].map((s) => (
-          <div key={s.l} className="rounded-lg border border-cyan-300/15 bg-[#020812]/60 px-1 py-2">
-            <p className="num-display text-sm font-extrabold text-white sm:text-base">{s.v}</p>
+          <div key={s.l} className="jarvis-stat rounded-lg px-1 py-2">
+            <p className="num-display text-sm font-extrabold text-slate-100 sm:text-base">{s.v}</p>
             <p className="mt-0.5 font-mono text-[9px] uppercase tracking-[0.18em] text-cyan-200/70">{s.l}</p>
           </div>
         ))}

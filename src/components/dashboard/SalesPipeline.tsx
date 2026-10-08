@@ -35,7 +35,7 @@ export default function SalesPipeline() {
   const visibles = activeEtapa ? ops.filter((o) => o.etapa === activeEtapa) : ops.slice(0, 3);
 
   return (
-    <section className="jarvis-panel anim-rise stagger-2 p-5" aria-label="Pipeline de ventas">
+    <section className="jarvis-card anim-rise stagger-2 p-5" aria-label="Pipeline de ventas">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="section-title">Pipeline de Ventas</h2>
@@ -59,18 +59,14 @@ export default function SalesPipeline() {
               key={e.id}
               role="listitem"
               onClick={() => setActiveEtapa(active ? null : e.id)}
-              className={`rounded-xl border p-3 text-left transition-all duration-200 ${
-                active
-                  ? "border-cyan-300/60 bg-cyan-300/[.08]"
-                  : "border-white/10 bg-white/[.03] hover:border-cyan-300/30 hover:bg-white/[.05]"
-              }`}
+              className={`jarvis-stage rounded-xl p-3 text-left ${active ? "jarvis-stage-active" : ""}`}
               style={active ? { boxShadow: `0 0 22px -6px ${e.glow}` } : undefined}
             >
               <span className="block truncate text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
                 {e.nombre}
               </span>
-              <span className="num-display mt-1 block text-2xl font-extrabold text-white">{total}</span>
-              <span className="mt-2 block h-1.5 overflow-hidden rounded-full bg-white/10">
+              <span className="num-display mt-1 block text-2xl font-extrabold text-slate-100">{total}</span>
+              <span className="jarvis-track mt-2 block h-1.5 overflow-hidden rounded-full">
                 <span
                   className="block h-full rounded-full transition-all"
                   style={{ width: `${Math.min(100, (total / max) * 100)}%`, background: e.color, boxShadow: `0 0 10px ${e.glow}` }}
@@ -84,10 +80,10 @@ export default function SalesPipeline() {
       {/* oportunidades */}
       <div className="mt-4 space-y-2.5">
         {visibles.map((o) => (
-          <article
-            key={o.id}
-            className="group flex cursor-pointer items-center gap-3 rounded-xl border border-white/[.07] bg-white/[.02] p-3 transition hover:border-cyan-300/30 hover:bg-cyan-300/[.05]"
-          >
+            <article
+              key={o.id}
+              className="jarvis-row group flex cursor-pointer items-center gap-3 rounded-xl p-3"
+            >
             <span
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
               style={{ background: `linear-gradient(135deg, ${o.avatarColor}, #0b1526)`, boxShadow: "inset 0 1px 0 rgba(255,255,255,.25)" }}

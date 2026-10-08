@@ -16,11 +16,11 @@ export default function KPICard({ kpi, index }: { kpi: KpiCard; index: number })
 
   return (
     <article
-      className={`jarvis-panel jarvis-panel-hover anim-rise reveal stagger-${Math.min(index + 1, 6)} p-4`}
+      className={`jarvis-card jarvis-panel-hover anim-rise reveal stagger-${Math.min(index + 1, 6)} p-4`}
       style={{ opacity: 1 }}
     >
       <div className="flex items-start justify-between gap-2">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-cyan-300/25 bg-cyan-300/10 text-cyan-300 shadow-[0_0_14px_-4px_rgba(34,211,238,.6)]">
+        <div className="jarvis-kpi-icon flex h-9 w-9 items-center justify-center rounded-lg">
           <Icon size={17} />
         </div>
         <span className="flex items-center gap-1 rounded-full border border-emerald-300/30 bg-emerald-400/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-300">
@@ -29,7 +29,7 @@ export default function KPICard({ kpi, index }: { kpi: KpiCard; index: number })
         </span>
       </div>
       <p className="mt-3 text-xs font-medium tracking-wide text-slate-400">{kpi.titulo}</p>
-      <p className="num-display mt-0.5 text-2xl font-extrabold text-white">{kpi.valor}</p>
+      <p className="num-display mt-0.5 text-2xl font-extrabold text-slate-100">{kpi.valor}</p>
       <p className="mt-0.5 text-[11px] text-slate-500">vs. mes anterior</p>
       <div className="mt-2 h-10" aria-hidden>
         <ResponsiveContainer width="100%" height="100%">

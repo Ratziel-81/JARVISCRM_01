@@ -634,3 +634,131 @@ button:focus-visible {
 [data-theme="neumorphism-01"] .jarvis-fab:hover {
   box-shadow: var(--jarvis-shadow-raised), var(--jarvis-shadow-glow);
 }
+
+[data-theme="neumorphism-01"] .jarvis-panel-hover:hover {
+  transform: translateY(-2px);
+  border-color: rgba(50, 159, 224, 0.45);
+  box-shadow: var(--jarvis-shadow-raised), var(--jarvis-shadow-glow);
+}
+
+/* ================================================================
+   FASE 4 — Dashboard: hero, iconos KPI, etapas, filas, puntos, stats.
+   Valores sin scope = dark actual al píxel; [data-theme] = claro.
+   ================================================================ */
+
+.jarvis-hero {
+  background: linear-gradient(to right, #06263f, #041829, #020812);
+  box-shadow: 0 24px 70px -24px rgba(0, 0, 0, 0.9);
+}
+[data-theme="neumorphism-01"] .jarvis-hero {
+  background: linear-gradient(120deg, #F4F7FA, #E2E8F0);
+  box-shadow: var(--jarvis-shadow-raised);
+}
+.jarvis-hero-glow {
+  background:
+    radial-gradient(520px 260px at 12% 50%, rgba(34, 211, 238, 0.16), transparent 65%),
+    radial-gradient(560px 300px at 88% 20%, rgba(47, 123, 255, 0.14), transparent 65%);
+}
+[data-theme="neumorphism-01"] .jarvis-hero-glow {
+  background:
+    radial-gradient(520px 260px at 12% 50%, rgba(50, 159, 224, 0.07), transparent 65%),
+    radial-gradient(560px 300px at 88% 20%, rgba(66, 199, 232, 0.06), transparent 65%);
+}
+
+.jarvis-kpi-icon {
+  border: 1px solid rgba(34, 211, 238, 0.25);
+  background: rgba(34, 211, 238, 0.1);
+  color: #67e8f9;
+  box-shadow: 0 0 14px -4px rgba(34, 211, 238, 0.6);
+}
+[data-theme="neumorphism-01"] .jarvis-kpi-icon {
+  border-color: var(--jarvis-line);
+  background: var(--jarvis-surface-light);
+  color: var(--jarvis-primary);
+  box-shadow: var(--jarvis-shadow-raised-sm);
+}
+
+/* fila clicable de listados del dashboard */
+.jarvis-row {
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.02);
+  transition: border-color var(--jarvis-transition), background-color var(--jarvis-transition);
+}
+.jarvis-row:hover {
+  border-color: rgba(34, 211, 238, 0.3);
+  background: rgba(34, 211, 238, 0.05);
+}
+[data-theme="neumorphism-01"] .jarvis-row {
+  border-color: var(--jarvis-line-soft);
+  background: var(--jarvis-surface-light);
+}
+[data-theme="neumorphism-01"] .jarvis-row:hover {
+  border-color: rgba(50, 159, 224, 0.4);
+  background: #ffffff;
+  box-shadow: var(--jarvis-shadow-raised-sm);
+}
+
+/* tarjeta de etapa del pipeline */
+.jarvis-stage {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  transition: border-color var(--jarvis-transition), background-color var(--jarvis-transition), box-shadow var(--jarvis-transition);
+}
+.jarvis-stage:hover {
+  border-color: rgba(34, 211, 238, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+}
+[data-theme="neumorphism-01"] .jarvis-stage {
+  border-color: var(--jarvis-line-soft);
+  background: var(--jarvis-surface-light);
+  box-shadow: var(--jarvis-shadow-raised-sm);
+}
+[data-theme="neumorphism-01"] .jarvis-stage:hover {
+  border-color: rgba(50, 159, 224, 0.4);
+  box-shadow: var(--jarvis-shadow-raised), var(--jarvis-shadow-glow);
+}
+.jarvis-stage-active {
+  border-color: rgba(34, 211, 238, 0.6);
+  background: rgba(34, 211, 238, 0.08);
+}
+[data-theme="neumorphism-01"] .jarvis-stage-active {
+  border-color: rgba(50, 159, 224, 0.55);
+  background: #ffffff;
+}
+
+/* pista de progreso */
+.jarvis-track {
+  background: rgba(255, 255, 255, 0.1);
+}
+[data-theme="neumorphism-01"] .jarvis-track {
+  background: var(--jarvis-surface);
+  box-shadow: var(--jarvis-shadow-inset);
+}
+
+/* punto de timeline / icono circular */
+.jarvis-dot {
+  background: #041321;
+}
+[data-theme="neumorphism-01"] .jarvis-dot {
+  background: var(--jarvis-surface-light);
+  box-shadow: var(--jarvis-shadow-raised-sm);
+}
+
+/* cajita de cifra (mapa inteligencia) */
+.jarvis-stat {
+  border: 1px solid rgba(34, 211, 238, 0.15);
+  background: rgba(2, 8, 18, 0.6);
+}
+[data-theme="neumorphism-01"] .jarvis-stat {
+  border-color: var(--jarvis-line-soft);
+  background: var(--jarvis-surface-light);
+  box-shadow: var(--jarvis-shadow-inset);
+}
+
+/* tooltip de Recharts en tema claro */
+[data-theme="neumorphism-01"] .recharts-default-tooltip {
+  background: rgba(244, 247, 250, 0.97) !important;
+  border: 1px solid rgba(50, 159, 224, 0.4) !important;
+  color: #29415D !important;
+  box-shadow: 0 12px 32px rgba(163, 177, 198, 0.5) !important;
+}

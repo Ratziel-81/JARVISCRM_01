@@ -28,7 +28,7 @@ function Ring({ valor }: { valor: number }) {
           <stop offset="100%" stopColor="#2dd4bf" />
         </linearGradient>
       </defs>
-      <text x="36" y="41" textAnchor="middle" fill="#fff" fontSize="15" fontWeight="800" fontFamily="Inter,sans-serif">
+      <text x="36" y="41" textAnchor="middle" fontSize="15" fontWeight="800" fontFamily="Inter,sans-serif" style={{ fill: "var(--jarvis-text)" }}>
         {valor}%
       </text>
     </svg>
@@ -52,7 +52,7 @@ export default function KPIOverview() {
   }, []);
 
   return (
-    <section className="jarvis-panel anim-rise stagger-4 flex h-full flex-col p-5" aria-label="KPIs clave">
+    <section className="jarvis-card anim-rise stagger-4 flex h-full flex-col p-5" aria-label="KPIs clave">
       <h2 className="section-title">KPIs Clave</h2>
       <div className="mt-4 grid flex-1 grid-cols-2 content-center gap-4">
         {items.map((k) => (

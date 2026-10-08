@@ -28,7 +28,7 @@ export default function FeaturedOffers() {
   }, []);
 
   return (
-    <section className="jarvis-panel anim-rise stagger-4 flex h-full flex-col p-5" aria-label="Ofertas destacadas">
+    <section className="jarvis-card anim-rise stagger-4 flex h-full flex-col p-5" aria-label="Ofertas destacadas">
       <div className="flex items-center justify-between gap-2">
         <h2 className="section-title">Ofertas Destacadas</h2>
         <Link to="/ofertas" className="flex items-center gap-1 text-xs font-semibold text-cyan-300 transition hover:text-cyan-100">
@@ -41,7 +41,7 @@ export default function FeaturedOffers() {
           return (
           <article
             key={o.id}
-            className="cursor-pointer rounded-xl border border-white/[.07] bg-white/[.02] p-3 transition hover:border-cyan-300/30 hover:bg-cyan-300/[.05]"
+            className="jarvis-row cursor-pointer rounded-xl p-3"
           >
             <div className="flex items-start justify-between gap-2">
               <p className="min-w-0 truncate text-[13px] font-semibold text-slate-100">{o.titulo}</p>

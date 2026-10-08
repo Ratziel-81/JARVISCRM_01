@@ -2,6 +2,8 @@ import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YA
 import { useEffect, useState } from "react";
 import { ventasMensuales, type VentaMensual } from "../../data/mockData";
 import { api } from "../../lib/api";
+import { chartTema } from "../../lib/chartTheme";
+import { useSkin } from "../../lib/skin";
 
 export default function SalesChart() {
   const [items, setItems] = useState<VentaMensual[]>(ventasMensuales);
@@ -20,8 +22,10 @@ export default function SalesChart() {
   }, []);
 
   const data = items.map((v) => ({ ...v, k: v.ventas / 1000 }));
+  const { skin } = useSkin();
+  const ct = chartTema(skin);
   return (
-    <section className="jarvis-panel anim-rise stagger-3 p-5" aria-label="Evolución de ventas">
+    <section className="jarvis-card anim-rise stagger-3 p-5" aria-label="Evolución de ventas">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="section-title">Evolución de Ventas</h2>
@@ -45,13 +49,13 @@ export default function SalesChart() {
                 <stop offset="100%" stopColor="#22d3ee" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid stroke="rgba(103,232,249,.08)" vertical={false} />
-            <XAxis dataKey="mes" tick={{ fill: "#7d8aa0", fontSize: 11 }} axisLine={{ stroke: "rgba(103,232,249,.15)" }} tickLine={false} />
-            <YAxis tick={{ fill: "#7d8aa0", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => `${v}k`} />
-            <Tooltip
-              formatter={(value) => [`€${Number(value).toLocaleString("es-ES")}`, "Ventas"]}
-              labelStyle={{ color: "#a5e8ff" }}
-            />
+              <CartesianGrid stroke={ct.rejilla} vertical={false} />
+              <XAxis dataKey="mes" tick={{ fill: ct.tick, fontSize: 11 }} axisLine={{ stroke: ct.eje }} tickLine={false} />
+              <YAxis tick={{ fill: ct.tick, fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => `${v}k`} />
+              <Tooltip
+                formatter={(value) => [`€${Number(value).toLocaleString("es-ES")}`, "Ventas"]}
+                labelStyle={{ color: ct.etiqueta }}
+              />
             <Line type="monotone" dataKey="k" name="Ventas" stroke="url(#salesStroke)" strokeWidth={2.5} dot={{ r: 3, fill: "#041321", stroke: "#22d3ee", strokeWidth: 2 }} activeDot={{ r: 5, fill: "#22d3ee", stroke: "#e0f2fe" }} fill="url(#salesFill)" />
           </LineChart>
         </ResponsiveContainer>

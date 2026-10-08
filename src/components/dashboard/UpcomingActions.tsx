@@ -56,10 +56,10 @@ function Grupo({ titulo, items }: { titulo: string; items: Item[] }) {
         {items.map((a) => {
           const { Icon, cls } = iconFor(a.icono);
           return (
-            <div
-              key={a.id}
-              className="flex cursor-pointer items-center gap-3 rounded-xl border border-white/[.07] bg-white/[.02] p-2.5 transition hover:border-cyan-300/30 hover:bg-cyan-300/[.05]"
-            >
+              <div
+                key={a.id}
+                className="jarvis-row flex cursor-pointer items-center gap-3 rounded-xl p-2.5"
+              >
               <span className="num-display w-12 shrink-0 font-mono text-xs font-semibold text-cyan-200">{a.hora}</span>
               <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${cls}`}>
                 <Icon size={15} />
@@ -104,7 +104,7 @@ export default function UpcomingActions() {
   }, []);
 
   return (
-    <section className="jarvis-panel anim-rise stagger-5 h-full p-5" aria-label="Próximas acciones">
+    <section className="jarvis-card anim-rise stagger-5 h-full p-5" aria-label="Próximas acciones">
       <h2 className="section-title">Próximas Acciones</h2>
       <div className="mt-3 space-y-4">
         <Grupo titulo="Hoy" items={hoy} />

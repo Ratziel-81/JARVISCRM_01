@@ -28,14 +28,14 @@ export default function RecentActivity() {
   }, []);
 
   return (
-    <section className="jarvis-panel anim-rise stagger-3 flex h-full flex-col p-5" aria-label="Actividad reciente">
+    <section className="jarvis-card anim-rise stagger-3 flex h-full flex-col p-5" aria-label="Actividad reciente">
       <h2 className="section-title">Actividad Reciente</h2>
       <ol className="relative mt-4 flex-1 space-y-1 border-l border-cyan-300/15 pl-0">
         {items.map((a) => {
           const { Icon, cls } = ICONS[a.tipo as keyof typeof ICONS] ?? ICONS.tarea;
           return (
             <li key={a.id} className="relative flex gap-3 pb-4 pl-5 last:pb-0">
-              <span className={`absolute -left-[13px] top-0 flex h-[26px] w-[26px] items-center justify-center rounded-full border bg-[#041321] ${cls}`}>
+              <span className={`jarvis-dot absolute -left-[13px] top-0 flex h-[26px] w-[26px] items-center justify-center rounded-full border ${cls}`}>
                 <Icon size={13} />
               </span>
               <div className="min-w-0">

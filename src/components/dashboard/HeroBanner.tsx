@@ -1,16 +1,9 @@
 export default function HeroBanner() {
   return (
-    <section className="anim-rise relative overflow-hidden rounded-2xl border border-cyan-300/20 bg-gradient-to-r from-[#06263f] via-[#041829] to-[#020812] shadow-[0_24px_70px_-24px_rgba(0,0,0,.9)]">
+    <section className="jarvis-hero anim-rise relative overflow-hidden rounded-2xl border border-cyan-300/20">
       {/* capas decorativas */}
       <div className="tech-grid-bg absolute inset-0" aria-hidden />
-      <div
-        className="absolute inset-0"
-        aria-hidden
-        style={{
-          background:
-            "radial-gradient(520px 260px at 12% 50%, rgba(34,211,238,.16), transparent 65%), radial-gradient(560px 300px at 88% 20%, rgba(47,123,255,.14), transparent 65%)",
-        }}
-      />
+      <div className="jarvis-hero-glow absolute inset-0" aria-hidden />
       <div className="hud-line absolute inset-x-0 top-0" aria-hidden />
       <div className="hud-line absolute inset-x-0 bottom-0 opacity-60" aria-hidden />
 
@@ -64,7 +57,7 @@ export default function HeroBanner() {
         {/* texto */}
         <div className="min-w-0 flex-1">
           <p className="font-mono text-[11px] tracking-[0.28em] text-cyan-300/80">CENTRO DE MANDO COMERCIAL</p>
-          <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+          <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-slate-100 sm:text-3xl">
             Hola Alex<span className="text-cyan-300">,</span>
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-300">
