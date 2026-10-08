@@ -2,6 +2,8 @@ import { Pencil, Plus, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import type { Cobertura, EtapaPipeline, Oportunidad } from "../data/mockData";
 import { api } from "../lib/api";
+import { useSkin } from "../lib/skin";
+import { SKINS } from "../lib/skins";
 
 export default function ConfiguracionPage() {
   const [etapas, setEtapas] = useState<EtapaPipeline[]>([]);
@@ -13,6 +15,7 @@ export default function ConfiguracionPage() {
   const [editEtapa, setEditEtapa] = useState<EtapaPipeline | null>(null);
   const [nuevaCob, setNuevaCob] = useState({ id: "", nombre: "", llamadas: "6", visitas: "1", descripcion: "" });
   const [editCob, setEditCob] = useState<Cobertura | null>(null);
+  const { skin, setSkin } = useSkin();
 
   async function recargar() {
     const [e, c, o] = await Promise.all([api.etapas(), api.coberturas(), api.oportunidades()]);
@@ -106,8 +109,58 @@ export default function ConfiguracionPage() {
       <div>
         <p className="font-mono text-[11px] tracking-[0.3em] text-cyan-300/70">AJUSTES</p>
         <h1 className="mt-1 text-2xl font-extrabold text-white">Configuración</h1>
-        <p className="mt-1 text-sm text-slate-400">{cargando ? "Sincronizando…" : "Etapas del pipeline y tipos de cobertura"}</p>
+        <p className="mt-1 text-sm text-slate-400">{cargando ? "Sincronizando…" : "Apariencia, etapas del pipeline y tipos de cobertura"}</p>
       </div>
+
+      {/* apariencia / skins */}
+      <section className="jarvis-panel p-5" aria-label="Tema visual">
+        <h2 className="section-title">Tema visual</h2>
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {SKINS.map((s) => {
+            const activo = skin === s.id;
+            const claro = s.id === "neumorphism-01";
+            return (
+              <button
+                key={s.id}
+                onClick={() => setSkin(s.id)}
+                aria-pressed={activo}
+                className={`flex items-center gap-4 rounded-xl border p-4 text-left transition ${
+                  activo
+                    ? "border-cyan-300/60 bg-cyan-300/[.07] shadow-[0_0_24px_-8px_rgba(34,211,238,.5)]"
+                    : "border-white/10 bg-white/[.02] hover:border-cyan-300/30"
+                }`}
+              >
+                <span
+                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border"
+                  style={
+                    claro
+                      ? { background: "#E8EDF3", borderColor: "rgba(255,255,255,.75)", boxShadow: "4px 4px 9px rgba(163,177,198,.5), -4px -4px 9px rgba(255,255,255,.9)" }
+                      : { background: "#020812", borderColor: "rgba(34,211,238,.4)", boxShadow: "0 0 14px rgba(34,211,238,.35)" }
+                  }
+                  aria-hidden
+                >
+                  <span
+                    className="h-4 w-4 rounded-full"
+                    style={claro ? { background: "#329FE0" } : { background: "#22d3ee", boxShadow: "0 0 8px #22d3ee" }}
+                  />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-2">
+                    <span className="text-sm font-bold tracking-wide text-white">{s.nombre}</span>
+                    {activo && (
+                      <span className="rounded-full border border-cyan-300/50 bg-cyan-300/15 px-2 py-0.5 font-mono text-[10px] font-bold tracking-widest text-cyan-100">
+                        ACTIVO
+                      </span>
+                    )}
+                  </span>
+                  <span className="mt-0.5 block truncate text-xs text-slate-400">{s.descripcion}</span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        <p className="mt-2 font-mono text-[11px] text-slate-500">Se aplica a todo el CRM al instante y se recuerda en este navegador.</p>
+      </section>
 
       {error && (
         <div className="jarvis-panel border-red-300/30 p-4 text-sm text-red-300" role="alert">
