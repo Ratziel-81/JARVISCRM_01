@@ -114,7 +114,7 @@ export default function Topbar({ onMenu }: Props) {
       <div className="flex min-w-0 items-center gap-3">
         <JarvisLogo />
         <div className="leading-tight">
-          <p className="truncate text-[15px] font-extrabold tracking-[0.08em] text-white">
+          <p className="truncate text-[15px] font-extrabold tracking-[0.08em] text-slate-100">
             J.A.R.V.I.S. <span className="text-cyan-300">CRM</span>
           </p>
           <p className="hidden truncate text-[11px] tracking-wide text-slate-400 sm:block">Your clients. Our mission.</p>
@@ -218,7 +218,7 @@ export default function Topbar({ onMenu }: Props) {
               A
             </span>
             <span className="hidden text-left leading-tight sm:block">
-              <span className="block text-[13px] font-semibold text-white">Hola, Alex</span>
+              <span className="block text-[13px] font-semibold text-slate-100">Hola, Alex</span>
               <span className="block text-[11px] text-slate-400">Administrador</span>
             </span>
             <ChevronDown size={15} className={`text-slate-400 transition-transform ${userOpen ? "rotate-180" : ""}`} />
@@ -226,7 +226,7 @@ export default function Topbar({ onMenu }: Props) {
           {userOpen && (
             <div className="anim-rise absolute right-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-xl border border-cyan-300/20 shadow-2xl backdrop-blur-xl jarvis-menu">
               {["Mi perfil", "Preferencias", "Sesiones activas"].map((item) => (
-                <button key={item} className="block w-full px-4 py-2.5 text-left text-sm text-slate-200 transition hover:bg-cyan-300/10 hover:text-white">
+                <button key={item} className="block w-full px-4 py-2.5 text-left text-sm text-slate-200 transition hover:bg-cyan-300/10 hover:text-slate-100">
                   {item}
                 </button>
               ))}

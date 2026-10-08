@@ -299,10 +299,11 @@ body {
     inset -4px -4px 9px rgba(255, 255, 255, 0.9);
   --jarvis-shadow-glow:
     0 0 18px rgba(50, 159, 224, 0.16);
+}
 
-  /* Remapeo Tailwind v4: text-*/bg-*/border-* leen estas variables,
-     cientos de clases existentes se adaptan sin reescribir JSX.
-     (white/black/bordes blancos: sustitución manual en FASE 3–6.) */
+/* Remapeo Tailwind v4 en regla SEPARADA a propósito: el pipeline pierde
+   declaraciones al fusionar dos reglas con el mismo selector exacto. */
+:root[data-theme="neumorphism-01"] {
   /* escala de texto: claro sobre oscuro -> azul grisáceo sobre claro */
   --color-slate-100: #29415D;
   --color-slate-200: #3E5875;
@@ -822,6 +823,7 @@ button:focus-visible {
 .jarvis-qa {
   border: 1px solid rgba(34, 211, 238, 0.15);
   background: rgba(255, 255, 255, 0.03);
+  color: #e2e8f0;
   transition: border-color var(--jarvis-transition), background-color var(--jarvis-transition), box-shadow var(--jarvis-transition), color var(--jarvis-transition), opacity var(--jarvis-transition);
 }
 .jarvis-qa:hover {
@@ -838,6 +840,7 @@ button:focus-visible {
   border-color: var(--jarvis-line-soft);
   background: var(--jarvis-surface-light);
   box-shadow: var(--jarvis-shadow-raised-sm);
+  color: var(--jarvis-text);
 }
 [data-theme="neumorphism-01"] .jarvis-qa:hover {
   border-color: rgba(50, 159, 224, 0.5);
@@ -856,6 +859,14 @@ button:focus-visible {
   background: var(--jarvis-surface);
   box-shadow: var(--jarvis-shadow-inset);
   color: var(--jarvis-primary);
+}
+
+/* avatar de cliente: cuadrado con bordes redondeados */
+.jarvis-avatar {
+  border-radius: 12px;
+}
+[data-theme="neumorphism-01"] .jarvis-avatar {
+  box-shadow: var(--jarvis-shadow-raised-sm);
 }
 
 /* ================================================================

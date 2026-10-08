@@ -34,7 +34,7 @@ function Avatar({ c, size = "md" }: { c: Cliente; size?: "sm" | "md" | "lg" }) {
   const cls = size === "lg" ? "h-14 w-14 text-base" : size === "sm" ? "h-8 w-8 text-[11px]" : "h-10 w-10 text-xs";
   return (
     <span
-      className={`flex shrink-0 items-center justify-center rounded-full font-bold text-slate-100 ${cls}`}
+      className={`jarvis-avatar flex shrink-0 items-center justify-center rounded-xl font-bold text-white ${cls}`}
       style={{ background: `linear-gradient(135deg, ${c.avatarColor}, #0b1526)` }}
       aria-hidden
     >

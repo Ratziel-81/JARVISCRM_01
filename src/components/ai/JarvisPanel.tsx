@@ -394,7 +394,7 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
           </button>
         )}
         <p className="font-mono text-[10px] tracking-[0.34em] text-cyan-300/80">NÚCLEO ACTIVO</p>
-        <h2 className="mt-0.5 text-xl font-extrabold tracking-[0.12em] text-white">
+        <h2 className="mt-0.5 text-xl font-extrabold tracking-[0.12em] text-slate-100">
           J.A.R.V.I.S.
         </h2>
         <p className="text-xs text-slate-400">Asistente Virtual</p>

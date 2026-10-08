@@ -36,7 +36,7 @@ export default function RecentClients() {
               className="jarvis-row flex items-center gap-3 rounded-xl p-2.5"
             >
               <span
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+                className="jarvis-avatar flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xs font-bold text-white"
                 style={{ background: `linear-gradient(135deg, ${c.avatarColor}, #0b1526)` }}
               >
                 {c.iniciales}
