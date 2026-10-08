@@ -372,7 +372,7 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
 
   return (
     <aside
-      className="anim-rise stagger-2 relative flex h-full min-h-[560px] flex-col overflow-hidden rounded-2xl border border-cyan-300/25 bg-gradient-to-b from-[#07263f] via-[#041626] to-[#020b14] p-5 shadow-[0_0_50px_-12px_rgba(34,211,238,.35),0_24px_70px_-24px_rgba(0,0,0,.9)]"
+      className="jarvis-assistant anim-rise stagger-2 relative flex h-full min-h-[560px] flex-col overflow-hidden rounded-2xl p-5"
       aria-label="Asistente J.A.R.V.I.S."
     >
       <div className="tech-grid-bg absolute inset-0 opacity-70" aria-hidden />
@@ -399,7 +399,7 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
         </h2>
         <p className="text-xs text-slate-400">Asistente Virtual</p>
         {/* piloto automático + voz */}
-        <div className="mx-auto mt-2 flex w-fit items-center gap-1 overflow-hidden rounded-full border border-white/10 px-1 py-1">
+        <div className="mx-auto mt-2 flex w-fit items-center gap-1 overflow-hidden rounded-full border border-cyan-300/15 px-1 py-1">
           <span className="px-2 font-mono text-[10px] tracking-widest text-cyan-200/80" title="El chat elige solo: VOZ para lo rápido, CEREBRO para análisis">
             {manosLibres ? (despierto ? "TE ESCUCHO" : "DI «JARVIS»") : `AUTO · ${usando === "cerebro" ? "CEREBRO" : "VOZ"}`}
           </span>
@@ -456,13 +456,13 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
       <div ref={scrollRef} className="relative mt-2 max-h-52 min-h-[104px] flex-1 space-y-2 overflow-y-auto pr-1" aria-live="polite">
         {mensajes.slice(-6).map((m) =>
           m.de === "jarvis" ? (
-            <div key={m.id} className="rounded-xl rounded-tl-sm border border-cyan-300/20 bg-cyan-300/[.07] p-3 text-[13px] leading-relaxed text-cyan-50">
+            <div key={m.id} className="jarvis-msg rounded-xl rounded-tl-sm p-3 text-[13px] leading-relaxed">
               <span className="mb-1 block font-mono text-[10px] tracking-[0.2em] text-cyan-300">J.A.R.V.I.S.</span>
               <span className="whitespace-pre-wrap">“{m.texto}”</span>
               {m.meta && <span className="mt-1.5 block font-mono text-[9px] tracking-widest text-slate-500">{m.meta}</span>}
             </div>
           ) : (
-            <div key={m.id} className="ml-8 rounded-xl rounded-tr-sm border border-white/10 bg-white/[.05] p-2.5 text-[13px] text-slate-200">
+            <div key={m.id} className="jarvis-msg-user ml-8 rounded-xl rounded-tr-sm p-2.5 text-[13px] text-slate-200">
               {m.texto}
             </div>
           ),
@@ -486,7 +486,7 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
           onChange={(e) => setInput(e.target.value)}
           placeholder="Pregunta lo que sea…"
           disabled={pensando}
-          className="min-w-0 flex-1 rounded-xl border border-cyan-300/20 bg-white/[.04] px-3 py-2 text-[13px] text-slate-100 placeholder:text-slate-600 outline-none transition focus:border-cyan-300/50 disabled:opacity-50"
+          className="jarvis-field min-w-0 flex-1 rounded-xl border border-cyan-300/20 px-3 py-2 text-[13px] text-slate-100 placeholder:text-slate-600 outline-none transition focus:border-cyan-300/50 disabled:opacity-50"
           aria-label="Preguntar a J.A.R.V.I.S."
         />
         <button
@@ -495,10 +495,10 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
           title={escuchando ? "Dejar de escuchar" : "Dictar por micro"}
           aria-label={escuchando ? "Dejar de escuchar" : "Dictar por micro"}
           aria-pressed={escuchando}
-          className={`rounded-xl border p-2 transition ${
+          className={`jarvis-icon-button p-2 ${
             escuchando
               ? "animate-pulse border-red-300/60 bg-red-400/20 text-red-200"
-              : "border-cyan-300/20 text-slate-400 hover:border-cyan-300/40 hover:text-cyan-100"
+              : "hover:border-cyan-300/40 hover:text-cyan-100"
           }`}
         >
           <Mic size={15} />

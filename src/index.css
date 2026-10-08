@@ -312,6 +312,7 @@ body {
   --color-slate-600: #A9B7C6;
 
   /* acentos cian -> azules legibles sobre claro */
+  --color-cyan-50: #1A6A9E;
   --color-cyan-100: #1F7AB5;
   --color-cyan-200: #2B93CC;
   --color-cyan-300: #329FE0;
@@ -761,4 +762,98 @@ button:focus-visible {
   border: 1px solid rgba(50, 159, 224, 0.4) !important;
   color: #29415D !important;
   box-shadow: 0 12px 32px rgba(163, 177, 198, 0.5) !important;
+}
+
+/* ================================================================
+   FASE 5 — Asistente JARVIS: contenedor, núcleo, mensajes y acciones.
+   Valores sin scope = dark actual al píxel; [data-theme] = claro.
+   ================================================================ */
+
+.jarvis-assistant {
+  background: linear-gradient(to bottom, #07263f, #041626, #020b14);
+  border: 1px solid rgba(34, 211, 238, 0.25);
+  box-shadow: 0 0 50px -12px rgba(34, 211, 238, 0.35), 0 24px 70px -24px rgba(0, 0, 0, 0.9);
+}
+[data-theme="neumorphism-01"] .jarvis-assistant {
+  background: linear-gradient(165deg, #F4F7FA, #E2E8F0);
+  border-color: var(--jarvis-line);
+  box-shadow: var(--jarvis-shadow-raised);
+}
+
+/* capas del núcleo */
+.jarvis-core-mid {
+  background: radial-gradient(circle at 35% 30%, rgba(125, 211, 252, 0.5), rgba(3, 105, 161, 0.55) 55%, rgba(2, 8, 18, 0.9) 85%);
+}
+[data-theme="neumorphism-01"] .jarvis-core-mid {
+  background: radial-gradient(circle at 35% 30%, rgba(168, 232, 248, 0.65), rgba(50, 159, 224, 0.35) 55%, rgba(232, 237, 243, 0.9) 85%);
+}
+.jarvis-core-halo {
+  background: radial-gradient(circle at 40% 35%, #e0faff, #0ea5e9 60%, #082f49);
+  box-shadow: 0 0 34px rgba(34, 211, 238, 0.65);
+}
+[data-theme="neumorphism-01"] .jarvis-core-halo {
+  background: radial-gradient(circle at 40% 35%, #ffffff, #7dd3fc 55%, #329FE0);
+  box-shadow: 0 0 26px rgba(50, 159, 224, 0.4);
+}
+
+/* burbujas de conversación */
+.jarvis-msg {
+  border: 1px solid rgba(34, 211, 238, 0.2);
+  background: rgba(34, 211, 238, 0.07);
+  color: #ecfeff;
+}
+[data-theme="neumorphism-01"] .jarvis-msg {
+  border-color: var(--jarvis-line-soft);
+  background: #ffffff;
+  box-shadow: var(--jarvis-shadow-raised-sm);
+  color: var(--jarvis-text);
+}
+.jarvis-msg-user {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+}
+[data-theme="neumorphism-01"] .jarvis-msg-user {
+  border-color: var(--jarvis-line-soft);
+  background: var(--jarvis-surface-light);
+  box-shadow: var(--jarvis-shadow-raised-sm);
+}
+
+/* acciones rápidas */
+.jarvis-qa {
+  border: 1px solid rgba(34, 211, 238, 0.15);
+  background: rgba(255, 255, 255, 0.03);
+  transition: border-color var(--jarvis-transition), background-color var(--jarvis-transition), box-shadow var(--jarvis-transition), color var(--jarvis-transition), opacity var(--jarvis-transition);
+}
+.jarvis-qa:hover {
+  border-color: rgba(34, 211, 238, 0.5);
+  background: rgba(34, 211, 238, 0.1);
+  color: #fff;
+  box-shadow: 0 0 18px -6px rgba(34, 211, 238, 0.7);
+}
+.jarvis-qa:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+[data-theme="neumorphism-01"] .jarvis-qa {
+  border-color: var(--jarvis-line-soft);
+  background: var(--jarvis-surface-light);
+  box-shadow: var(--jarvis-shadow-raised-sm);
+}
+[data-theme="neumorphism-01"] .jarvis-qa:hover {
+  border-color: rgba(50, 159, 224, 0.5);
+  background: #ffffff;
+  color: var(--jarvis-text);
+  box-shadow: var(--jarvis-shadow-raised-sm), var(--jarvis-shadow-glow);
+}
+.jarvis-qa-icon {
+  border: 1px solid rgba(34, 211, 238, 0.25);
+  background: rgba(34, 211, 238, 0.1);
+  color: #67e8f9;
+  transition: color var(--jarvis-transition);
+}
+[data-theme="neumorphism-01"] .jarvis-qa-icon {
+  border-color: var(--jarvis-line);
+  background: var(--jarvis-surface);
+  box-shadow: var(--jarvis-shadow-inset);
+  color: var(--jarvis-primary);
 }
