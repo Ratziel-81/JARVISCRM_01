@@ -100,7 +100,7 @@ export default function Topbar({ onMenu }: Props) {
   }, []);
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 flex h-[70px] items-center gap-3 border-b border-cyan-300/10 bg-[#020812]/90 px-3 backdrop-blur-xl sm:px-5">
+    <header className="fixed inset-x-0 top-0 z-50 flex h-[70px] items-center gap-3 border-b border-cyan-300/10 px-3 backdrop-blur-xl sm:px-5 jarvis-topbar">
       {/* menú móvil */}
       <button
         onClick={onMenu}
@@ -128,11 +128,11 @@ export default function Topbar({ onMenu }: Props) {
           value={query}
           onChange={(e) => cambiarQuery(e.target.value)}
           placeholder="Buscar clientes, empresas, oportunidades..."
-          className="w-full rounded-xl border border-cyan-300/15 bg-white/[.04] py-2.5 pl-11 pr-4 text-sm text-slate-100 placeholder:text-slate-500 outline-none transition focus:border-cyan-300/50 focus:bg-white/[.06] focus:shadow-[0_0_20px_-6px_rgba(34,211,238,.5)]"
+          className="jarvis-field w-full rounded-xl border border-cyan-300/15 py-2.5 pl-11 pr-4 text-sm text-slate-100 placeholder:text-slate-500 outline-none transition focus:border-cyan-300/50 focus:bg-white/[.06] focus:shadow-[0_0_20px_-6px_rgba(34,211,238,.5)]"
           aria-label="Búsqueda global"
         />
         {query.trim().length >= 2 && (
-          <div className="absolute inset-x-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-cyan-300/20 bg-[#041321]/95 shadow-2xl backdrop-blur-xl">
+          <div className="absolute inset-x-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-cyan-300/20 shadow-2xl backdrop-blur-xl jarvis-menu">
             {results.length === 0 ? (
               <p className="px-4 py-3 text-sm text-slate-400">Sin resultados para «{query}».</p>
             ) : (
@@ -187,7 +187,7 @@ export default function Topbar({ onMenu }: Props) {
             )}
           </button>
           {notifOpen && (
-            <div className="anim-rise absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-xl border border-cyan-300/20 bg-[#041321]/95 shadow-2xl backdrop-blur-xl">
+            <div className="anim-rise absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-xl border border-cyan-300/20 shadow-2xl backdrop-blur-xl jarvis-menu">
               <p className="border-b border-cyan-300/10 px-4 py-2.5 text-xs font-semibold uppercase tracking-widest text-cyan-200">
                 Notificaciones
               </p>
@@ -224,7 +224,7 @@ export default function Topbar({ onMenu }: Props) {
             <ChevronDown size={15} className={`text-slate-400 transition-transform ${userOpen ? "rotate-180" : ""}`} />
           </button>
           {userOpen && (
-            <div className="anim-rise absolute right-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-xl border border-cyan-300/20 bg-[#041321]/95 shadow-2xl backdrop-blur-xl">
+            <div className="anim-rise absolute right-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-xl border border-cyan-300/20 shadow-2xl backdrop-blur-xl jarvis-menu">
               {["Mi perfil", "Preferencias", "Sesiones activas"].map((item) => (
                 <button key={item} className="block w-full px-4 py-2.5 text-left text-sm text-slate-200 transition hover:bg-cyan-300/10 hover:text-white">
                   {item}
@@ -240,7 +240,7 @@ export default function Topbar({ onMenu }: Props) {
 
       {/* búsqueda móvil expandida */}
       {mobileSearch && (
-        <div className="absolute inset-x-0 top-full border-b border-cyan-300/10 bg-[#020812]/95 p-3 backdrop-blur-xl md:hidden">
+        <div className="absolute inset-x-0 top-full border-b border-cyan-300/10 p-3 backdrop-blur-xl md:hidden jarvis-topbar">
           <div className="relative">
             <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-cyan-300/70" />
             <input
@@ -248,12 +248,12 @@ export default function Topbar({ onMenu }: Props) {
               value={query}
               onChange={(e) => cambiarQuery(e.target.value)}
               placeholder="Buscar clientes, empresas, oportunidades..."
-              className="w-full rounded-xl border border-cyan-300/20 bg-white/[.05] py-2.5 pl-10 pr-3 text-sm text-slate-100 placeholder:text-slate-500 outline-none focus:border-cyan-300/50"
+              className="jarvis-field w-full rounded-xl border border-cyan-300/20 py-2.5 pl-10 pr-3 text-sm text-slate-100 placeholder:text-slate-500 outline-none focus:border-cyan-300/50"
               aria-label="Búsqueda global móvil"
             />
           </div>
           {results.length > 0 && (
-            <div className="mt-2 overflow-hidden rounded-xl border border-cyan-300/20 bg-[#041321]">
+            <div className="jarvis-menu mt-2 overflow-hidden rounded-xl border border-cyan-300/20">
               {results.map((r) => (
                 <button
                   key={`m-${r.tipo}-${r.id}`}

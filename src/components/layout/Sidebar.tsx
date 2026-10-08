@@ -49,7 +49,7 @@ export default function Sidebar({ mobileOpen, onClose }: Props) {
         }`}
       />
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-[200px] shrink-0 flex-col border-r border-cyan-300/10 bg-[#030d18]/95 pt-[70px] backdrop-blur-xl transition-transform duration-300 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 lg:pt-[70px] ${
+        className={`jarvis-sidebar fixed inset-y-0 left-0 z-40 flex w-[200px] shrink-0 flex-col border-r border-cyan-300/10 pt-[70px] backdrop-blur-xl transition-transform duration-300 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 lg:pt-[70px] ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -62,23 +62,21 @@ export default function Sidebar({ mobileOpen, onClose }: Props) {
               onClick={onClose}
               className={({ isActive }) =>
                 `group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all duration-200 ${
-                  isActive
-                    ? "border border-cyan-300/40 bg-[#0a2a44] text-cyan-200 shadow-[0_0_18px_-4px_rgba(34,211,238,.55),inset_0_1px_0_rgba(165,232,255,.12)]"
-                    : "border border-transparent text-slate-400 hover:border-cyan-300/15 hover:bg-white/[.04] hover:text-slate-100"
+                  isActive ? "jarvis-navitem-active" : "jarvis-navitem"
                 }`
               }
             >
               {({ isActive }) => (
                 <>
                   <span
-                    className={`absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-full bg-cyan-300 transition-all ${
-                      isActive ? "opacity-100 shadow-[0_0_8px_rgba(34,211,238,.9)]" : "opacity-0"
+                    className={`jarvis-navitem-indicator absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-full transition-all ${
+                      isActive ? "opacity-100" : "opacity-0"
                     }`}
                   />
                   <Icon
                     size={17}
                     strokeWidth={isActive ? 2.2 : 1.8}
-                    className={`shrink-0 transition-colors ${isActive ? "text-cyan-300" : "text-slate-500 group-hover:text-cyan-200"}`}
+                    className="nav-ic shrink-0"
                   />
                   <span className="truncate">{label}</span>
                 </>

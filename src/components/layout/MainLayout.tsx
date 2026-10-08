@@ -11,17 +11,10 @@ export default function MainLayout() {
   const [jarvis, setJarvis] = useState(() => window.innerWidth >= 1280);
 
   return (
-    <div className="min-h-screen bg-[#020812] text-slate-100">
+    <div className="jarvis-app min-h-screen">
       {/* fondo ambiental global */}
       <div className="tech-grid-bg pointer-events-none fixed inset-0" aria-hidden />
-      <div
-        className="pointer-events-none fixed inset-0"
-        aria-hidden
-        style={{
-          background:
-            "radial-gradient(900px 420px at 15% -5%, rgba(47,123,255,.12), transparent 60%), radial-gradient(800px 380px at 90% 0%, rgba(34,211,238,.09), transparent 60%), radial-gradient(700px 500px at 50% 110%, rgba(45,212,191,.06), transparent 60%)",
-        }}
-      />
+      <div className="jarvis-ambient pointer-events-none fixed inset-0" aria-hidden />
       <Topbar onMenu={() => setMobileOpen(true)} />
       <div className="relative flex">
         <Sidebar mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
@@ -46,7 +39,7 @@ export default function MainLayout() {
           onClick={() => setJarvis(true)}
           title="Abrir J.A.R.V.I.S."
           aria-label="Abrir J.A.R.V.I.S."
-          className="fixed bottom-5 right-5 z-50 flex items-center justify-center rounded-full border border-cyan-300/40 bg-[#07263f]/95 p-3.5 text-cyan-200 shadow-[0_0_24px_-4px_rgba(34,211,238,.6)] transition hover:bg-[#0a2f4f]"
+          className="jarvis-fab fixed bottom-5 right-5 z-50 flex items-center justify-center rounded-full border border-cyan-300/40 p-3.5 text-cyan-200 transition"
         >
           <Bot size={22} />
         </button>

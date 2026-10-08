@@ -495,3 +495,142 @@ button:focus-visible {
   outline: 2px solid var(--jarvis-primary);
   outline-offset: 2px;
 }
+
+/* ================================================================
+   FASE 3 — Layout: app, ambiente, topbar, menús, sidebar, campo.
+   Clases aditivas; los valores sin scope replican el dark actual.
+   ================================================================ */
+
+.jarvis-app {
+  background: #020812;
+  color: #f1f5f9;
+}
+[data-theme="neumorphism-01"] .jarvis-app {
+  background: var(--jarvis-bg);
+  color: var(--jarvis-text);
+}
+
+.jarvis-ambient {
+  background:
+    radial-gradient(900px 420px at 15% -5%, rgba(47, 123, 255, 0.12), transparent 60%),
+    radial-gradient(800px 380px at 90% 0%, rgba(34, 211, 238, 0.09), transparent 60%),
+    radial-gradient(700px 500px at 50% 110%, rgba(45, 212, 191, 0.06), transparent 60%);
+}
+[data-theme="neumorphism-01"] .jarvis-ambient {
+  background:
+    radial-gradient(900px 420px at 15% -5%, rgba(50, 159, 224, 0.05), transparent 60%),
+    radial-gradient(800px 380px at 90% 0%, rgba(66, 199, 232, 0.04), transparent 60%);
+}
+[data-theme="neumorphism-01"] .tech-grid-bg {
+  background-image:
+    linear-gradient(rgba(41, 65, 93, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(41, 65, 93, 0.05) 1px, transparent 1px);
+}
+
+.jarvis-topbar {
+  background: rgba(2, 8, 18, 0.9);
+}
+[data-theme="neumorphism-01"] .jarvis-topbar {
+  background: rgba(232, 237, 243, 0.9);
+  box-shadow: 0 8px 24px -12px rgba(163, 177, 198, 0.55);
+}
+
+.jarvis-menu {
+  background: rgba(4, 19, 33, 0.95);
+}
+[data-theme="neumorphism-01"] .jarvis-menu {
+  background: rgba(244, 247, 250, 0.96);
+  box-shadow: var(--jarvis-shadow-raised);
+}
+
+/* campo de texto/buscador: solo superficie (la geometría sigue en JSX) */
+.jarvis-field {
+  background: rgba(255, 255, 255, 0.04);
+  color: #f1f5f9;
+}
+[data-theme="neumorphism-01"] .jarvis-field {
+  background: var(--jarvis-input-bg);
+  box-shadow: var(--jarvis-shadow-inset);
+  color: var(--jarvis-text);
+}
+
+.jarvis-sidebar {
+  background: rgba(3, 13, 24, 0.95);
+}
+[data-theme="neumorphism-01"] .jarvis-sidebar {
+  background: rgba(232, 237, 243, 0.96);
+}
+
+.jarvis-navitem {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: #94a3b8;
+  transition: color var(--jarvis-transition), border-color var(--jarvis-transition), background-color var(--jarvis-transition), box-shadow var(--jarvis-transition);
+}
+.jarvis-navitem:hover {
+  border-color: rgba(34, 211, 238, 0.15);
+  background: rgba(255, 255, 255, 0.04);
+  color: #f1f5f9;
+}
+.jarvis-navitem-active {
+  border-color: rgba(34, 211, 238, 0.4);
+  background: #0a2a44;
+  color: #a5e8ff;
+  box-shadow: 0 0 18px -4px rgba(34, 211, 238, 0.55), inset 0 1px 0 rgba(165, 232, 255, 0.12);
+}
+.jarvis-navitem .nav-ic {
+  color: #64748b;
+  transition: color var(--jarvis-transition);
+}
+.jarvis-navitem:hover .nav-ic {
+  color: #a5e8ff;
+}
+.jarvis-navitem-active .nav-ic {
+  color: #67e8f9;
+}
+.jarvis-navitem-indicator {
+  background: #67e8f9;
+  box-shadow: 0 0 8px rgba(34, 211, 238, 0.9);
+}
+[data-theme="neumorphism-01"] .jarvis-navitem {
+  border-radius: 12px;
+  color: var(--jarvis-text-secondary);
+}
+[data-theme="neumorphism-01"] .jarvis-navitem:hover {
+  border-color: rgba(50, 159, 224, 0.35);
+  background: var(--jarvis-surface-light);
+  box-shadow: var(--jarvis-shadow-raised-sm);
+  color: var(--jarvis-text);
+}
+[data-theme="neumorphism-01"] .jarvis-navitem-active {
+  border-color: rgba(50, 159, 224, 0.45);
+  background: var(--jarvis-surface-light);
+  color: var(--jarvis-primary);
+  box-shadow: var(--jarvis-shadow-raised-sm);
+}
+[data-theme="neumorphism-01"] .jarvis-navitem .nav-ic {
+  color: var(--jarvis-text-muted);
+}
+[data-theme="neumorphism-01"] .jarvis-navitem:hover .nav-ic,
+[data-theme="neumorphism-01"] .jarvis-navitem-active .nav-ic {
+  color: var(--jarvis-primary);
+}
+[data-theme="neumorphism-01"] .jarvis-navitem-indicator {
+  background: var(--jarvis-primary);
+  box-shadow: 0 0 8px rgba(50, 159, 224, 0.55);
+}
+
+.jarvis-fab {
+  background: rgba(7, 38, 63, 0.95);
+  box-shadow: 0 0 24px -4px rgba(34, 211, 238, 0.6);
+}
+.jarvis-fab:hover {
+  background: rgba(10, 47, 79, 0.95);
+}
+[data-theme="neumorphism-01"] .jarvis-fab {
+  background: var(--jarvis-surface-light);
+  box-shadow: var(--jarvis-shadow-raised);
+}
+[data-theme="neumorphism-01"] .jarvis-fab:hover {
+  box-shadow: var(--jarvis-shadow-raised), var(--jarvis-shadow-glow);
+}
