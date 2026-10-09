@@ -17,6 +17,7 @@ export const api = {
   etapas: () => req<import("../data/mockData").EtapaPipeline[]>("/api/pipeline-etapas"),
   clientes: () => req<import("../data/mockData").Cliente[]>("/api/clientes"),
   cliente: (id: string) => req<import("../data/mockData").Cliente>(`/api/clientes/${id}`),
+  borrarCliente: (id: string) => fetch(`/api/clientes/${id}`, { method: "DELETE" }),
   coberturas: () => req<import("../data/mockData").Cobertura[]>("/api/coberturas"),
   empresas: () => req<import("../data/mockData").Empresa[]>("/api/empresas"),
   contactos: () => req<import("../data/mockData").Contacto[]>("/api/contactos"),

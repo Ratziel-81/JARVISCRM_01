@@ -176,6 +176,10 @@ app.post("/api/clientes/:id/contacto", (req, res) => {
 });
 
 app.delete("/api/clientes/:id", (req, res) => {
+  const cur = db.prepare("SELECT * FROM clientes WHERE id=?").get(req.params.id);
+  if (!cur) return res.status(404).json({ error: "cliente no encontrado" });
+  // desvincula sus acciones (las oportunidades/ofertas son por empresa y se conservan)
+  db.prepare("UPDATE acciones SET cliente_id=NULL WHERE cliente_id=?").run(req.params.id);
   db.prepare("DELETE FROM clientes WHERE id=?").run(req.params.id);
   res.status(204).end();
 });

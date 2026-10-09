@@ -48,6 +48,7 @@ export default function FichaClientePage() {
   const [cargando, setCargando] = useState(true);
   const [noExiste, setNoExiste] = useState(false);
   const [modal, setModal] = useState<null | "editar" | "oportunidad" | "oferta" | "accion">(null);
+  const [confirmandoBorrar, setConfirmandoBorrar] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [formOp, setFormOp] = useState({ empresa: "", importe: "", prioridad: "Media", probabilidad: "20" });
   const [formOf, setFormOf] = useState({ oportunidadId: "", titulo: "", importe: "", fechaVencimiento: "" });
@@ -124,6 +125,7 @@ export default function FichaClientePage() {
       fechaAlta: cliente.fechaAlta ?? "",
       fechaBaja: cliente.fechaBaja ?? "",
     });
+    setConfirmandoBorrar(false);
     setModal("editar");
   }
 
@@ -143,6 +145,19 @@ export default function FichaClientePage() {
     } catch {
       alert("No se pudo guardar.");
     } finally {
+      setGuardando(false);
+    }
+  }
+
+  async function borrarCliente() {
+    if (!id || guardando) return;
+    setGuardando(true);
+    try {
+      const res = await api.borrarCliente(id);
+      if (!res.ok) throw new Error();
+      navigate("/clientes");
+    } catch {
+      alert("No se pudo eliminar el cliente.");
       setGuardando(false);
     }
   }
@@ -395,7 +410,34 @@ export default function FichaClientePage() {
 
       {/* modal editar */}
       {modal === "editar" && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" onClick={() => !guardando && setModal(null)}>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" onClick={() => !guardando && (setModal(null), setConfirmandoBorrar(false))}>
+          {confirmandoBorrar && cliente ? (
+            <div onClick={(e) => e.stopPropagation()} className="jarvis-panel w-full max-w-md space-y-4 p-6 text-center" role="alertdialog" aria-label="Confirmar eliminación">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-red-300/40 bg-red-400/10 text-red-300">
+                <X size={22} />
+              </div>
+              <div>
+                <h2 className="text-lg font-extrabold text-white">¿Seguro que quieres eliminar a {cliente.nombre}?</h2>
+                <p className="mt-1 text-sm text-slate-400">Se borrará el cliente y se desvincularán sus acciones. Esta acción no se puede deshacer.</p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setConfirmandoBorrar(false)}
+                  disabled={guardando}
+                  className="flex-1 rounded-xl border border-white/10 bg-white/[.02] py-2.5 text-sm font-semibold text-slate-300 transition hover:border-cyan-300/40 hover:text-white disabled:opacity-50"
+                >
+                  Atrás
+                </button>
+                <button
+                  onClick={borrarCliente}
+                  disabled={guardando}
+                  className="flex-1 rounded-xl border border-red-400/60 bg-red-500/20 py-2.5 text-sm font-bold tracking-wide text-red-200 transition hover:bg-red-500/30 disabled:opacity-50"
+                >
+                  {guardando ? "Eliminando…" : "Eliminar"}
+                </button>
+              </div>
+            </div>
+          ) : (
           <form onClick={(e) => e.stopPropagation()} onSubmit={guardarCliente} className="jarvis-panel max-h-[90vh] w-full max-w-md space-y-3 overflow-y-auto p-6">
             <div className="flex items-center justify-between">
               <h2 className="section-title">Editar cliente</h2>
@@ -450,7 +492,16 @@ export default function FichaClientePage() {
             <button type="submit" disabled={guardando} className="w-full rounded-xl border border-cyan-300/40 bg-cyan-300/10 py-2.5 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-300/20 disabled:opacity-50">
               {guardando ? "Guardando…" : "Guardar"}
             </button>
+            <button
+              type="button"
+              onClick={() => setConfirmandoBorrar(true)}
+              disabled={guardando}
+              className="w-full rounded-xl border border-red-300/20 py-2.5 text-sm font-semibold text-red-300/80 transition hover:border-red-300/50 hover:text-red-200 disabled:opacity-50"
+            >
+              Eliminar cliente
+            </button>
           </form>
+          )}
         </div>
       )}
 
