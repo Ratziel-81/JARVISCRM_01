@@ -109,6 +109,54 @@ function detalleOportunidad(id) {
   return { ...op, ofertas };
 }
 
+// ---------- fechas relativas en español ----------
+// "el jueves" = el próximo jueves ESTRICTAMENTE posterior a hoy
+// (si hoy es jueves, es el de dentro de 7 días).
+const DIAS = { domingo: 0, lunes: 1, martes: 2, miercoles: 3, miércoles: 3, jueves: 4, viernes: 5, sabado: 6, sábado: 6 };
+function resolverFecha(texto) {
+  const t = String(texto ?? "").toLowerCase().trim();
+  const hoy = new Date(`${hoyISO()}T00:00:00`);
+  const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  if (!t || t === "hoy") return { fecha: iso(hoy), interpretacion: "hoy" };
+  if (t.includes("pasado mañana")) {
+    const d = new Date(hoy);
+    d.setDate(d.getDate() + 2);
+    return { fecha: iso(d), interpretacion: "pasado mañana" };
+  }
+  if (t.includes("mañana") || t === "manana") {
+    const d = new Date(hoy);
+    d.setDate(d.getDate() + 1);
+    return { fecha: iso(d), interpretacion: "mañana" };
+  }
+  if (t.includes("ayer")) {
+    const d = new Date(hoy);
+    d.setDate(d.getDate() - 1);
+    return { fecha: iso(d), interpretacion: "ayer" };
+  }
+  const mDia = t.match(/(lunes|martes|miercoles|miércoles|jueves|viernes|sabado|sábado|domingo)/);
+  if (mDia) {
+    const objetivo = DIAS[mDia[1]];
+    let delta = (objetivo - hoy.getDay() + 7) % 7;
+    if (delta === 0) delta = 7; // el mismo día de hoy = el de la semana que viene
+    const d = new Date(hoy);
+    d.setDate(d.getDate() + delta);
+    return { fecha: iso(d), interpretacion: `el próximo ${mDia[1]}` };
+  }
+  const mNum = t.match(/(\d{1,2})(?:\s*de\s*([a-záéíóú]+))?/);
+  if (mNum) {
+    const dia = Number(mNum[1]);
+    const MESES = { enero: 0, febrero: 1, marzo: 2, abril: 3, mayo: 4, junio: 5, julio: 6, agosto: 7, septiembre: 8, setiembre: 8, octubre: 9, noviembre: 10, diciembre: 11 };
+    const mes = mNum[2] ? MESES[mNum[2]] : hoy.getMonth();
+    if (mes !== undefined && dia >= 1 && dia <= 31) {
+      let d = new Date(hoy.getFullYear(), mes, dia);
+      if (d < hoy) d = new Date(hoy.getFullYear() + 1, mes, dia);
+      return { fecha: iso(d), interpretacion: `el ${dia} del ${mes + 1}` };
+    }
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(t)) return { fecha: t, interpretacion: "fecha exacta" };
+  return { error: `no entiendo la fecha "${texto}": usa hoy, mañana, un día de la semana o una fecha` };
+}
+
 // ---------- web: buscar (sin clave, mejor esfuerzo) y leer páginas ----------
 async function wikiResumen(q) {
   try {
@@ -222,6 +270,10 @@ const TOOLS = [
   { type: "function", function: { name: "tareas_pendientes", description: "Tareas pendientes ordenadas por fecha.", parameters: { type: "object", properties: {} } } },
   { type: "function", function: { name: "buscar_web", description: "Busca información en internet (respuestas directas y temas; calidad variable, sin clave). Úsalo para datos externos: tipos de interés, noticias, definiciones.", parameters: { type: "object", properties: { q: { type: "string", description: "consulta" } } } } },
   { type: "function", function: { name: "leer_web", description: "Lee el texto de una página web (noticia, ficha de producto, documentación). Devuelve hasta 8000 caracteres.", parameters: { type: "object", properties: { url: { type: "string", description: "URL completa" } } } } },
+  { type: "function", function: { name: "resolver_fecha", description: "Convierte una fecha en palabras (hoy, mañana, el jueves, el 15 de octubre) a YYYY-MM-DD. Úsala SIEMPRE para fechas relativas: no calcules días a mano.", parameters: { type: "object", properties: { texto: { type: "string", description: "la fecha tal como la dijo el usuario" } } } } },
+  { type: "function", function: { name: "crear_cliente", description: "Crea un cliente. SOLO el nombre es obligatorio: crea con lo que tengas (empresa si la sabes) y no pidas email, teléfono ni valor.", parameters: { type: "object", properties: { nombre: { type: "string" }, empresa: { type: "string" }, email: { type: "string" }, telefono: { type: "string" }, estado: { type: "string", description: "Activo, Prospecto o En seguimiento" }, valor: { type: "number" } }, required: ["nombre"] } } },
+  { type: "function", function: { name: "crear_accion", description: "Crea una llamada, reunión, visita o tarea con fecha y hora. Si falta la hora, PREGUNTA antes de crear (no la inventes).", parameters: { type: "object", properties: { tipo: { type: "string", description: "llamada, reunion, visita o tarea" }, titulo: { type: "string" }, empresa: { type: "string" }, fecha: { type: "string", description: "YYYY-MM-DD (usa resolver_fecha)" }, hora: { type: "string", description: "HH:MM, solo si el usuario la dijo" }, detalle: { type: "string" } }, required: ["tipo", "fecha"] } } },
+  { type: "function", function: { name: "ir_a", description: "Lleva al usuario a una parte de la app. Úsala cuando pida abrir, ver o ir a un módulo.", parameters: { type: "object", properties: { ruta: { type: "string", description: "una de: /, /dashboard, /clientes, /oportunidades, /ofertas, /acciones, /calendario, /tareas, /kpis, /informes, /configuracion" } }, required: ["ruta"] } } },
 ];
 
 async function ejecutarHerramienta(name, args = {}) {
@@ -246,6 +298,64 @@ async function ejecutarHerramienta(name, args = {}) {
       return await buscarWeb(args.q ?? "");
     case "leer_web":
       return await leerWeb(args.url ?? "");
+    case "resolver_fecha":
+      return resolverFecha(args.texto ?? "");
+    case "crear_cliente": {
+      if (!args.nombre?.trim()) return { error: "falta el nombre del cliente: pregúntalo" };
+      const row = {
+        id: `c-${Date.now().toString(36)}`,
+        nombre: args.nombre.trim(),
+        empresa: args.empresa ?? "",
+        email: args.email ?? "",
+        telefono: args.telefono ?? "",
+        estado: ["Activo", "Prospecto", "En seguimiento"].includes(args.estado) ? args.estado : "Prospecto",
+        hace: "ahora mismo",
+        avatar_color: "#0ea5e9",
+        iniciales: args.nombre.trim().slice(0, 2).toUpperCase(),
+        valor: Number(args.valor ?? 0) || 0,
+        cobertura_id: null,
+        fecha_alta: hoyISO(),
+        fecha_baja: null,
+        ultimo_contacto: null,
+      };
+      db.prepare(
+        "INSERT INTO clientes (id,nombre,empresa,email,telefono,estado,hace,avatar_color,iniciales,valor,cobertura_id,fecha_alta,fecha_baja,ultimo_contacto) VALUES (@id,@nombre,@empresa,@email,@telefono,@estado,@hace,@avatar_color,@iniciales,@valor,@cobertura_id,@fecha_alta,@fecha_baja,@ultimo_contacto)",
+      ).run(row);
+      return { creado: true, id: row.id, nombre: row.nombre, empresa: row.empresa };
+    }
+    case "crear_accion": {
+      const TIPOS = { llamada: "llamada", reunion: "reunion", "reunión": "reunion", visita: "visita", tarea: "tarea" };
+      const tipo = TIPOS[String(args.tipo ?? "").toLowerCase()] ?? null;
+      if (!tipo) return { error: "tipo inválido: usa llamada, reunion, visita o tarea" };
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(args.fecha ?? "")) return { error: "falta fecha válida YYYY-MM-DD: usa resolver_fecha" };
+      if (args.hora !== undefined && args.hora !== null && args.hora !== "" && !/^([01]\d|2[0-3]):[0-5]\d$/.test(args.hora)) {
+        return { error: "hora inválida (usa HH:MM de 24h)" };
+      }
+      const empresa = args.empresa ?? "";
+      const row = {
+        id: `ac-${Date.now().toString(36)}`,
+        titulo: args.titulo?.trim() || `${{ llamada: "Llamada", reunion: "Reunión", visita: "Visita", tarea: "Tarea" }[tipo]}${empresa ? ` · ${empresa}` : ""}`,
+        tipo,
+        estado: "Pendiente",
+        fecha: args.fecha,
+        hora: args.hora || "",
+        duracion_min: 60,
+        empresa,
+        cliente_id: null,
+        detalle: args.detalle ?? "",
+        prioridad: "Media",
+        responsable: "",
+      };
+      db.prepare(
+        "INSERT INTO acciones (id,titulo,tipo,estado,fecha,hora,duracion_min,empresa,cliente_id,detalle,prioridad,responsable) VALUES (@id,@titulo,@tipo,@estado,@fecha,@hora,@duracion_min,@empresa,@cliente_id,@detalle,@prioridad,@responsable)",
+      ).run(row);
+      return { creado: true, id: row.id, titulo: row.titulo, tipo, fecha: row.fecha, hora: row.hora || "sin hora" };
+    }
+    case "ir_a": {
+      const RUTAS = ["/", "/dashboard", "/clientes", "/oportunidades", "/ofertas", "/acciones", "/calendario", "/tareas", "/kpis", "/informes", "/configuracion"];
+      if (!RUTAS.includes(args.ruta)) return { error: `ruta inválida (usa: ${RUTAS.join(", ")})` };
+      return { navegar: args.ruta };
+    }
     default:
       return { error: `herramienta desconocida: ${name}` };
   }
@@ -330,19 +440,26 @@ Si te piden análisis profundo, agenda u ofertas a medida, sugiere usar el CEREB
 }
 
 // ---------- CEREBRO: piensa, consulta la BD y la VOZ lo presenta ----------
-const SISTEMA_CEREBRO = `Eres el CEREBRO de J.A.R.V.I.S. CRM, el analista del comercial. Piensas paso a paso y CONSULTAS la base de datos con las herramientas antes de responder: no inventes cifras, úsalas de las herramientas.
+const SISTEMA_CEREBRO = `Eres el CEREBRO de J.A.R.V.I.S. CRM, el analista del comercial. Eres AUTÓNOMO: actúas con herramientas, no te limitas a recomendar. Si el usuario te cuenta un compromiso futuro, lo REGISTRAS con crear_accion en ese mismo turno. Si falta un dato (hora, nombre), preguntas SOLO eso y creas en el turno siguiente.
+Piensas paso a paso y CONSULTAS la base de datos con las herramientas antes de responder: no inventes cifras, úsalas de las herramientas.
 Puedes: organizar la agenda del día (qué hacer primero y por qué), detectar clientes desatendidos, priorizar oportunidades por importe × probabilidad, y proponer qué ofrecer a cada cliente según su historial.
+También puedes CREAR cosas: crear_cliente (pide el nombre si falta) y crear_accion para llamadas, reuniones, visitas y tareas. Si falta un dato necesario NO lo inventes: pregunta antes de crear (p. ej. si no te dan la hora de una reunión, pregunta "¿a qué hora?"). La conversación anterior te da el contexto: cuando el usuario responda a tu pregunta, completa la creación con lo que ya sabes de antes.
+AUTONOMÍA (obligatorio): cuando el usuario te cuente que ha quedado en algo futuro ("hemos quedado en reunirnos el jueves", "llámale mañana", "hay que enviarle la oferta"), REGÍSTRALO con crear_accion en ese mismo turno: primero resolver_fecha, luego crear_accion. PROHIBIDO limitarte a recomendar registrarlo: si tienes datos suficientes, créalo. Si falta la hora, NO crees nada todavía: pregunta solo la hora y crea en el turno siguiente con todo el contexto. Si falta el nombre del cliente para crear_cliente, pregunta solo el nombre. Después de crear algo, informa de lo creado con sus datos.
+Para fechas en palabras usa SIEMPRE resolver_fecha (hoy es ${hoyISO()}); para horas usa HH:MM de 24h tal como las diga el usuario. Después de crear algo, informa de lo creado con sus datos.
+Si el usuario pide abrir, ver o ir a un módulo, usa ir_a con la ruta.
 También puedes buscar información externa en internet (buscar_web) y leer páginas concretas (leer_web): úsalo para datos que no estén en la base de datos (tipos, noticias, definiciones) y cita la fuente.
 REGLA: si el usuario pide explícitamente buscar en internet, leer una página o datos actuales/externos, USA OBLIGATORIAMENTE buscar_web o leer_web antes de responder. No respondas de memoria cuando te pidan consultar la web.
 Hoy es ${hoyISO()}. Responde en español, estructurado con titulares y bullets, máximo 250 palabras.`;
 
-export async function cerebro(pregunta) {
+export async function cerebro(pregunta, historial = []) {
   const t0 = Date.now();
   const messages = [
     { role: "system", content: SISTEMA_CEREBRO },
+    ...historial.slice(-8).map((h) => ({ role: h.rol === "yo" ? "user" : "assistant", content: h.texto })),
     { role: "user", content: pregunta },
   ];
   const usadas = [];
+  let navegar = null;
   let final = "";
   for (let i = 0; i < 6; i++) {
     const r = await ollamaChat({ model: CEREBRO, messages, tools: TOOLS, think: true, numCtx: 8192, temp: 0.4 });
@@ -364,6 +481,7 @@ export async function cerebro(pregunta) {
       } catch (e) {
         resultado = { error: `la herramienta ${c.function.name} falló: ${e.message}` };
       }
+      if (resultado && resultado.navegar) navegar = resultado.navegar;
       messages.push({ role: "tool", content: JSON.stringify(resultado).slice(0, 6000) });
     }
   }
@@ -387,6 +505,7 @@ export async function cerebro(pregunta) {
     respuesta: presentacion,
     analisis: final,
     herramientas: [...new Set(usadas)],
+    navegar,
     modelo: `${CEREBRO} + ${VOZ}`,
     ms: Date.now() - t0,
   };

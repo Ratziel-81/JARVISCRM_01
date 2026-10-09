@@ -1,5 +1,6 @@
 import { Ear, Mic, Moon, Send, Square, Volume2, VolumeX, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import { respuestasIA } from "../../data/mockData";
 import AICore from "./AICore";
 import QuickActions from "./QuickActions";
@@ -23,6 +24,34 @@ function clasificar(pregunta: string): Mente {
   return /agenda|organiz|planific|analiz|análisis|compara|recomien|ofrec|prioriz|estrateg|detal|\blista\b|vence|desatend|\bkpi\b|informe|semana|trimestre|quién|quiénes|por qué|cuáles/i.test(t)
     ? "cerebro"
     : "voz";
+}
+
+// Navegación por voz: "abre clientes", "ve al calendario", "muéstrame las ofertas"...
+const MODULOS: Array<{ nombres: string[]; ruta: string; nombre: string }> = [
+  { nombres: ["oportunidades", "oportunidad"], ruta: "/oportunidades", nombre: "Oportunidades" },
+  { nombres: ["ofertas", "oferta", "presupuestos"], ruta: "/ofertas", nombre: "Ofertas" },
+  { nombres: ["acciones", "accion"], ruta: "/acciones", nombre: "Acciones" },
+  { nombres: ["calendario"], ruta: "/calendario", nombre: "Calendario" },
+  { nombres: ["tareas", "tarea"], ruta: "/tareas", nombre: "Tareas" },
+  { nombres: ["kpis", "kpi"], ruta: "/kpis", nombre: "KPIs" },
+  { nombres: ["informes", "informe"], ruta: "/informes", nombre: "Informes" },
+  { nombres: ["configuracion", "configuración", "ajustes"], ruta: "/configuracion", nombre: "Configuración" },
+  { nombres: ["clientes", "cliente"], ruta: "/clientes", nombre: "Clientes" },
+  { nombres: ["dashboard", "inicio", "principal"], ruta: "/dashboard", nombre: "Dashboard" },
+];
+const VERBO_NAV = /\b(abre|abrir|ve|vete|ir|muestra|muéstrame|muestrame|llévame|llevame|enséñame|ensename|pon|vamos)\b/;
+
+function extraerNavegacion(texto: string): { ruta: string; nombre: string; puro: boolean } | null {
+  const t = texto.toLowerCase();
+  if (!VERBO_NAV.test(t)) return null;
+  for (const m of MODULOS) {
+    if (!m.nombres.some((n) => t.includes(n))) continue;
+    let resto = t.replace(VERBO_NAV, " ").replace(/\b(por favor|el|la|los|las|al|a|de|del|un|una|módulo|modulo|apartado|sección|seccion|pantalla|vista)\b/g, " ");
+    for (const mm of MODULOS) for (const n of mm.nombres) resto = resto.split(n).join(" ");
+    resto = resto.replace(/\s+/g, " ").trim();
+    return { ruta: m.ruta, nombre: m.nombre, puro: resto.length <= 2 };
+  }
+  return null;
 }
 
 interface ResultadoVoz {
@@ -155,14 +184,25 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
   // al desmontar, callar
   useEffect(() => () => window.speechSynthesis?.cancel(), []);
 
+  const navigate = useNavigate();
+
   const enviar = useCallback(
     async (texto: string) => {
       const pregunta = texto.trim();
       if (!pregunta || pensandoRef.current) return;
+      // navegación por voz: si pide ir a un módulo, vamos; si solo era eso, avisamos en local
+      const nav = extraerNavegacion(pregunta);
+      if (nav) navigate(nav.ruta);
       const mente = clasificar(pregunta);
       const historial = mensajesRef.current.slice(-8).map((m) => ({ rol: m.de === "user" ? "yo" : "jarvis", texto: m.texto }));
       agregarMensaje({ id: nextId++, de: "user", texto: pregunta });
       setInput("");
+      if (nav?.puro) {
+        const ack = `Abriendo ${nav.nombre}.`;
+        agregarMensaje({ id: nextId++, de: "jarvis", texto: ack, meta: "navegación por voz" });
+        decir(ack);
+        return;
+      }
       pensandoRef.current = true;
       setPensando(true);
       setUsando(mente);
@@ -183,13 +223,14 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
       try {
         window.speechSynthesis?.cancel();
         if (mente === "cerebro") {
-          const d = await postIA("/api/ia/cerebro", { pregunta });
+          const d = await postIA("/api/ia/cerebro", { pregunta, historial });
           agregarMensaje({
             id: nextId++,
             de: "jarvis",
             texto: d.respuesta,
             meta: `${d.modelo} · ${(d.ms / 1000).toFixed(1)}s · ${d.herramientas?.join(", ") ?? ""}`,
           });
+          if (d.navegar) navigate(d.navegar);
           decir(d.respuesta);
         } else {
           const d = await postIA("/api/ia/chat", { mensaje: pregunta, historial });
@@ -218,7 +259,7 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
         setPensando(false);
       }
     },
-    [agregarMensaje, decir],
+    [agregarMensaje, decir, navigate],
   );
 
   function onSubmit(e: FormEvent) {

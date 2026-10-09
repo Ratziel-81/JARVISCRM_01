@@ -666,10 +666,10 @@ app.post("/api/ia/chat", async (req, res) => {
 });
 
 app.post("/api/ia/cerebro", async (req, res) => {
-  const { pregunta } = req.body ?? {};
+  const { pregunta, historial } = req.body ?? {};
   if (!pregunta?.trim()) return res.status(400).json({ error: "pregunta requerida" });
   try {
-    res.json(await cerebro(pregunta.trim()));
+    res.json(await cerebro(pregunta.trim(), Array.isArray(historial) ? historial : []));
   } catch (e) {
     res.status(502).json({ error: errorIA(e) });
   }

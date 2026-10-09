@@ -86,19 +86,16 @@ modelos descargados (`ollama pull qwen3:1.7b`). Variables opcionales:
 `OLLAMA_URL`, `IA_RAPIDO`, `IA_CEREBRO`.
 
 Endpoints: `GET /api/ia/estado`, `POST /api/ia/chat {mensaje, historial}`,
-`POST /api/ia/cerebro {pregunta}` (devuelve respuesta presentadal por la VOZ +
-análisis + herramientas usadas), `POST /api/ia/dormir` (descarga los modelos de
-la GPU y libera la VRAM; despiertan solos al usarlos). El panel J.A.R.V.I.S.
-vive fijo en el lateral derecho de toda la app (no se cierra al navegar, botón
-flotante para reabrirlo), elige solo la mente según la pregunta (piloto
-automático: agenda, análisis, listas y comparativas van al CEREBRO; lo demás a
-la VOZ), lee las respuestas en voz alta con el sintetizador local del navegador
-(botón para silenciar), acepta dictado por micro y modo manos libres (botón de
-oreja: escucha en continuo y solo reacciona al oír "JARVIS"), tiene botón PARAR
-que calla la voz y cancela la petición, y acepta forzar con "por voz" o
-"cerebro" en la pregunta. El CEREBRO dispone de 10 herramientas: 8 sobre la BD,
-`buscar_web` (internet sin clave + fallback a Wikipedia) y `leer_web` (extrae el
-texto de cualquier página). Botón de oreja para **manos libres**: escucha en
+`POST /api/ia/cerebro {pregunta, historial}` (devuelve respuesta presentadal
+por la VOZ + análisis + herramientas usadas + `navegar` si hay que cambiar de
+pantalla), `POST /api/ia/dormir` (descarga los modelos de la GPU y libera la
+VRAM; despiertan solos al usarlos). El panel J.A.R.V.I.S. elige solo la mente
+según la pregunta, navega por voz ("abre clientes", "ve al calendario") y lee
+las respuestas en voz alta. El CEREBRO dispone de 14 herramientas: 8 de lectura
+sobre la BD, `buscar_web` y `leer_web`, más `resolver_fecha` (fechas en
+palabras como "el jueves"), `crear_cliente`, `crear_accion` (llamadas,
+reuniones, visitas, tareas) e `ir_a` (navegación). Si falta un dato (p. ej. la
+hora), lo pregunta y completa en el turno siguiente con el contexto. Botón de oreja para **manos libres**: escucha en
 continuo y solo reacciona al oír "JARVIS" (confirma con "Dime", capta el
 comando tras 2,5 s de silencio y lo ejecuta).
 
