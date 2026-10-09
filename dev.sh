@@ -14,11 +14,12 @@ command -v npm >/dev/null || { echo "ERROR: falta npm" >&2; exit 1; }
 echo "==> preparando BD local…"
 node server/seed-clientes.mjs
 
-cleanup() { kill $OLLAMA_PID $API_PID $WEB_PID 2>/dev/null || true; }
+cleanup() { kill $OLLAMA_PID $API_PID $WEB_PID $MDNS_PID 2>/dev/null || true; }
 trap cleanup INT TERM EXIT
 OLLAMA_PID=""
 API_PID=""
 WEB_PID=""
+MDNS_PID=""
 
 # --- Ollama (IA local) ---
 if curl -sf http://localhost:11434/api/tags >/dev/null 2>&1; then
@@ -66,13 +67,29 @@ else
 fi
 
 echo "==> arrancando frontend…"
-node node_modules/vite/bin/vite.js &
+node node_modules/vite/bin/vite.js --host &
 WEB_PID=$!
+
+LAN_IP=$(hostname -I 2>/dev/null | awk '{print $1}')
+
+# alias mDNS best-effort (requiere avahi): JARVISCRM.local
+if [ -n "${LAN_IP:-}" ] && command -v avahi-publish >/dev/null 2>&1; then
+  avahi-publish -a JARVISCRM.local "$LAN_IP" > /tmp/avahi-crm.log 2>&1 &
+  MDNS_PID=$!
+fi
 
 echo ""
 echo "  IA   http://localhost:11434  (modelos: ${IA_RAPIDO:-qwen3:1.7b} + ${IA_CEREBRO:-qwen3.5})"
 echo "  API  http://localhost:3001/api/health"
 echo "  Web  http://localhost:5173  (clientes: /clientes)"
+if [ -n "${LAN_IP:-}" ]; then
+  echo "  Red  http://$LAN_IP:5173  (toda tu red local)"
+  if [ -n "${MDNS_PID:-}" ] && kill -0 "$MDNS_PID" 2>/dev/null; then
+    echo "  mDNS http://JARVISCRM.local:5173  (si tu red/dispositivo lo resuelve)"
+  else
+    echo "  (instala avahi-utils para el alias http://JARVISCRM.local:5173)"
+  fi
+fi
 echo "  Ctrl+C para parar todo"
 echo ""
 wait

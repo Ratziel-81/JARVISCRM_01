@@ -18,7 +18,14 @@ versionadas, acciones con calendario y fotos, tareas, KPIs, informes y configura
 Hace todo: instala dependencias si faltan, prepara la BD con datos demo,
 levanta Ollama si está caído (temporal, se apaga al salir; si ya corre como
 servicio lo reutiliza sin apagarlo), precalienta los modelos de IA, arranca la
-API en `:3001` y el frontend en `:5173`. `Ctrl+C` lo para todo.
+API en `:3001` y el frontend en `:5173` expuesto a tu red local.
+`Ctrl+C` lo para todo.
+
+Red local: el frontend escucha en todas las interfaces, así que desde otro
+dispositivo de tu red abre `http://<IP-de-este-PC>:5173` (el script la muestra
+al arrancar). Si instalas `avahi-utils`, además publica el alias
+`http://JARVISCRM.local:5173` (lo resuelven Windows, macOS, iOS y Linux;
+Android normalmente no).
 
 Manual (2 terminales):
 
@@ -89,9 +96,12 @@ Endpoints: `GET /api/ia/estado`, `POST /api/ia/chat {mensaje, historial}`,
 `POST /api/ia/cerebro {pregunta, historial}` (devuelve respuesta presentadal
 por la VOZ + análisis + herramientas usadas + `navegar` si hay que cambiar de
 pantalla), `POST /api/ia/dormir` (descarga los modelos de la GPU y libera la
-VRAM; despiertan solos al usarlos). El panel J.A.R.V.I.S. elige solo la mente
-según la pregunta, navega por voz ("abre clientes", "ve al calendario") y lee
-las respuestas en voz alta. El CEREBRO dispone de 14 herramientas: 8 de lectura
+VRAM; despiertan solos al usarlos). El panel J.A.R.V.I.S. tiene selector
+**AUTO** (decide solo) / **LIGHT** (siempre el rápido) / **SMART** (siempre el
+grande), navega por voz ("abre clientes", "ve al calendario") y lee las
+respuestas en voz alta. Clic en un cliente abre su **ficha** (`/clientes/:id`)
+con KPIs, oportunidades, ofertas y acciones filtrados más botones para crear
+oportunidad, oferta y acción. El CEREBRO dispone de 14 herramientas: 8 de lectura
 sobre la BD, `buscar_web` y `leer_web`, más `resolver_fecha` (fechas en
 palabras como "el jueves"), `crear_cliente`, `crear_accion` (llamadas,
 reuniones, visitas, tareas) e `ir_a` (navegación). Si falta un dato (p. ej. la

@@ -63,6 +63,12 @@ app.get("/api/oportunidades", (_req, res) => {
   );
 });
 app.get("/api/clientes", (_req, res) => res.json(todosLosClientes()));
+
+app.get("/api/clientes/:id", (req, res) => {
+  const c = clienteConCobertura(req.params.id);
+  if (!c || !c.id) return res.status(404).json({ error: "cliente no encontrado" });
+  res.json(c);
+});
 app.get("/api/empresas", (_req, res) => res.json(rows("empresas")));
 app.get("/api/contactos", (_req, res) => res.json(rows("contactos")));
 app.get("/api/ofertas", (_req, res) => res.json(rows("ofertas")));

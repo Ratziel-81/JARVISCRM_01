@@ -1,5 +1,6 @@
 import { Frown, LayoutGrid, List, Mail, Meh, Minus, Phone, PhoneCall, Plus, Rows3, Search, Smile, UserX, X } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   ESTADO_CLIENTE_STYLES,
   clientesRecientes,
@@ -63,7 +64,8 @@ function BotonContacto({ id, onHecho }: { id: string; onHecho: (c: Cliente) => v
       disabled={busy}
       title="Registrar contacto hoy (pone la carita en verde)"
       aria-label="Registrar contacto hoy"
-      onClick={async () => {
+      onClick={async (e) => {
+        e.stopPropagation();
         if (busy) return;
         setBusy(true);
         try {
@@ -93,7 +95,14 @@ export default function ClientesPage() {
   const [cobFiltro, setCobFiltro] = useState<string>("todas");
   const [orden, setOrden] = useState<Orden>("recientes");
   const [vista, setVista] = useState<Vista>("lista");
+  const navigate = useNavigate();
   const [modal, setModal] = useState(false);
+
+  function irAFicha(e: React.KeyboardEvent | React.MouseEvent, id: string) {
+    if ("key" in e && e.key !== "Enter" && e.key !== " ") return;
+    if ("key" in e) e.preventDefault();
+    navigate(`/clientes/${id}`);
+  }
   const [guardando, setGuardando] = useState(false);
   const [form, setForm] = useState({
     nombre: "",
@@ -318,7 +327,7 @@ export default function ClientesPage() {
             </thead>
             <tbody>
               {filtrados.map((c) => (
-                <tr key={c.id} className="border-b border-white/5 transition last:border-0 hover:bg-cyan-300/[.04]">
+                <tr key={c.id} onClick={(e) => irAFicha(e, c.id)} onKeyDown={(e) => irAFicha(e, c.id)} tabIndex={0} className="cursor-pointer border-b border-white/5 transition last:border-0 hover:bg-cyan-300/[.04]">
                   <td className="px-4 py-2.5">
                     <div className="flex items-center gap-3">
                       <AvatarTile color={c.avatarColor} iniciales={c.iniciales} />
@@ -352,7 +361,7 @@ export default function ClientesPage() {
           {filtrados.map((c) => {
             const st = estadoCobertura(c);
             return (
-              <article key={c.id} className="jarvis-panel jarvis-panel-hover p-5">
+              <article key={c.id} onClick={(e) => irAFicha(e, c.id)} onKeyDown={(e) => irAFicha(e, c.id)} tabIndex={0} role="button" aria-label={`Cliente ${c.nombre}`} className="jarvis-panel jarvis-panel-hover cursor-pointer p-5">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-3">
                     <AvatarTile color={c.avatarColor} iniciales={c.iniciales} size="lg" />
@@ -389,7 +398,7 @@ export default function ClientesPage() {
       ) : (
         <ul className="jarvis-panel divide-y divide-white/5">
           {filtrados.map((c) => (
-            <li key={c.id} className="flex items-center gap-3 px-4 py-2.5 transition hover:bg-cyan-300/[.04]">
+            <li key={c.id} onClick={(e) => irAFicha(e, c.id)} onKeyDown={(e) => irAFicha(e, c.id)} tabIndex={0} role="button" aria-label={`Cliente ${c.nombre}`} className="flex cursor-pointer items-center gap-3 px-4 py-2.5 transition hover:bg-cyan-300/[.04]">
               <CaraCobertura c={c} size={18} />
               <AvatarTile color={c.avatarColor} iniciales={c.iniciales} size="sm" />
               <div className="min-w-0 flex-1">

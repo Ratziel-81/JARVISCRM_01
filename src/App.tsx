@@ -8,6 +8,7 @@ import CalendarioPage from "./pages/CalendarioPage";
 import ClientesPage from "./pages/ClientesPage";
 import ConfiguracionPage from "./pages/ConfiguracionPage";
 import DashboardPage from "./pages/DashboardPage";
+import FichaClientePage from "./pages/FichaClientePage";
 import InformesPage from "./pages/InformesPage";
 import KpisPage from "./pages/KpisPage";
 import OfertasPage from "./pages/OfertasPage";
@@ -23,6 +24,7 @@ export default function App() {
           <Route index element={<DashboardPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/clientes" element={<ClientesPage />} />
+          <Route path="/clientes/:id" element={<FichaClientePage />} />
           <Route path="/oportunidades" element={<OportunidadesPage />} />
           <Route path="/acciones" element={<AccionesPage />} />
           <Route path="/ofertas" element={<OfertasPage />} />

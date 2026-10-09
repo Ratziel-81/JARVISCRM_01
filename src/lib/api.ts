@@ -16,6 +16,7 @@ export const api = {
   kpisCirculares: () => req<import("../data/mockData").KpiCircular[]>("/api/kpis-circulares"),
   etapas: () => req<import("../data/mockData").EtapaPipeline[]>("/api/pipeline-etapas"),
   clientes: () => req<import("../data/mockData").Cliente[]>("/api/clientes"),
+  cliente: (id: string) => req<import("../data/mockData").Cliente>(`/api/clientes/${id}`),
   coberturas: () => req<import("../data/mockData").Cobertura[]>("/api/coberturas"),
   empresas: () => req<import("../data/mockData").Empresa[]>("/api/empresas"),
   contactos: () => req<import("../data/mockData").Contacto[]>("/api/contactos"),

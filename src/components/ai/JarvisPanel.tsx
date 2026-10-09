@@ -106,6 +106,7 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
   const [mensajes, setMensajes] = useState<Mensaje[]>([SALUDO]);
   const [pensando, setPensando] = useState(false);
   const [usando, setUsando] = useState<Mente>("voz");
+  const [forzado, setForzado] = useState<"auto" | "light" | "smart">("auto");
   const [vozAlta, setVozAlta] = useState(true);
   const [escuchando, setEscuchando] = useState(false);
   const [manosLibres, setManosLibres] = useState(false);
@@ -193,7 +194,7 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
       // navegación por voz: si pide ir a un módulo, vamos; si solo era eso, avisamos en local
       const nav = extraerNavegacion(pregunta);
       if (nav) navigate(nav.ruta);
-      const mente = clasificar(pregunta);
+      const mente: Mente = forzado === "auto" ? clasificar(pregunta) : forzado === "smart" ? "cerebro" : "voz";
       const historial = mensajesRef.current.slice(-8).map((m) => ({ rol: m.de === "user" ? "yo" : "jarvis", texto: m.texto }));
       agregarMensaje({ id: nextId++, de: "user", texto: pregunta });
       setInput("");
@@ -259,7 +260,7 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
         setPensando(false);
       }
     },
-    [agregarMensaje, decir, navigate],
+    [agregarMensaje, decir, navigate, forzado],
   );
 
   function onSubmit(e: FormEvent) {
@@ -441,8 +442,29 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
         <p className="text-xs text-slate-400">Asistente Virtual</p>
         {/* piloto automático + voz */}
         <div className="mx-auto mt-2 flex w-fit items-center gap-1 overflow-hidden rounded-full border border-cyan-300/15 px-1 py-1">
-          <span className="px-2 font-mono text-[10px] tracking-widest text-cyan-200/80" title="El chat elige solo: VOZ para lo rápido, CEREBRO para análisis">
-            {manosLibres ? (despierto ? "TE ESCUCHO" : "DI «JARVIS»") : `AUTO · ${usando === "cerebro" ? "CEREBRO" : "VOZ"}`}
+          <select
+            value={forzado}
+            onChange={(e) => setForzado(e.target.value as "auto" | "light" | "smart")}
+            title="AUTO decide solo · LIGHT siempre el rápido · SMART siempre el grande"
+            aria-label="Elegir cerebro"
+            className="cursor-pointer bg-transparent px-1 font-mono text-[10px] tracking-widest text-cyan-200/80 outline-none"
+          >
+            <option value="auto">AUTO</option>
+            <option value="light">LIGHT</option>
+            <option value="smart">SMART</option>
+          </select>
+          <span className="px-1 font-mono text-[10px] tracking-widest text-cyan-200/80" title="Mente en uso">
+            {manosLibres
+              ? despierto
+                ? "TE ESCUCHO"
+                : "DI «JARVIS»"
+              : forzado === "auto"
+                ? usando === "cerebro"
+                  ? "CEREBRO"
+                  : "VOZ"
+                : forzado === "smart"
+                  ? "SMART"
+                  : "LIGHT"}
           </span>
           <button
             onClick={() => setManosLibres((v) => !v)}

@@ -33,7 +33,7 @@ export default function RecentClients() {
         {items.map((c) => (
           <li key={c.id}>
             <Link
-              to="/clientes"
+              to={`/clientes/${c.id}`}
               className="jarvis-row flex items-center gap-3 rounded-xl p-2.5"
             >
               <AvatarTile color={c.avatarColor} iniciales={c.iniciales} />
