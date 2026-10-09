@@ -40,6 +40,16 @@ const MODULOS: Array<{ nombres: string[]; ruta: string; nombre: string }> = [
   { nombres: ["dashboard", "inicio", "principal"], ruta: "/dashboard", nombre: "Dashboard" },
 ];
 const VERBO_NAV = /\b(abre|abrir|ve|vete|ir|muestra|muéstrame|muestrame|llévame|llevame|enséñame|ensename|pon|vamos)\b/;
+// Orden de parada por voz/texto: funciona en todos los modos sin llamar a la IA
+const ORDEN_PARAR = /^(para|para ya|parate|para eso|detente|detén|basta|cállate|callate|silencio|stop)\b/i;
+// Quita vocativos ("jarvis, para", "oye jarvis, para") antes de detectar la orden
+function sinVocativo(texto: string): string {
+  return texto
+    .replace(/^(oye|eh)[\s,]+jarvis[\s,]*/i, "")
+    .replace(/^jarvis[\s,]*/i, "")
+    .replace(/[\s,]*jarvis[\s,.!?]*$/i, "")
+    .trim();
+}
 
 function extraerNavegacion(texto: string): { ruta: string; nombre: string; puro: boolean } | null {
   const t = texto.toLowerCase();
@@ -191,6 +201,14 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
     async (texto: string) => {
       const pregunta = texto.trim();
       if (!pregunta || pensandoRef.current) return;
+      // PARAR tiene prioridad absoluta: no va a la IA en ningún modo
+      if (ORDEN_PARAR.test(sinVocativo(pregunta))) {
+        agregarMensaje({ id: nextId++, de: "user", texto: pregunta });
+        setInput("");
+        pararTodo();
+        agregarMensaje({ id: nextId++, de: "jarvis", texto: "⏹ Detenido.", meta: "orden de parada" });
+        return;
+      }
       // navegación por voz: si pide ir a un módulo, vamos; si solo era eso, avisamos en local
       const nav = extraerNavegacion(pregunta);
       if (nav) navigate(nav.ruta);
@@ -260,7 +278,7 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
         setPensando(false);
       }
     },
-    [agregarMensaje, decir, navigate, forzado],
+    [agregarMensaje, decir, navigate, forzado, pararTodo],
   );
 
   function onSubmit(e: FormEvent) {
@@ -324,16 +342,19 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
     };
 
     const vaciarComando = () => {
-      const cmd = comandoRef.current
-        .replace(/^(oye|eh|oye jarvis|eh jarvis|jarvis)[\s,]*/i, "")
-        .replace(/\bjarvis\b/gi, "")
-        .trim();
+      const cmd = sinVocativo(
+        comandoRef.current
+          .replace(/\bjarvis\b/gi, "")
+          .trim(),
+      );
       comandoRef.current = "";
       setDespierto(false);
       despiertoRef.current = false;
       // orden directa de parada por voz: no va a la IA
-      if (/^(para|para ya|parate|para eso|cállate|callate|silencio|stop|basta)\b/i.test(cmd)) {
+      if (ORDEN_PARAR.test(cmd)) {
+        agregarMensaje({ id: nextId++, de: "user", texto: comandoRef.current || "para" });
         pararTodo();
+        agregarMensaje({ id: nextId++, de: "jarvis", texto: "⏹ Detenido.", meta: "orden por voz" });
         return;
       }
       if (cmd) enviar(cmd);
@@ -356,7 +377,13 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
       recogRef.current = rec;
       rec.onresult = (e) => {
         // anti-bucle: mientras habla, el micro oye al altavoz → se ignora
-        if (hablandoRef.current) return;
+        // EXCEPTO la orden de parada, que siempre se atiende
+        if (hablandoRef.current) {
+          let texto = "";
+          for (const r of Array.from(e.results ?? [])) texto += `${r?.[0]?.transcript ?? ""} `;
+          if (ORDEN_PARAR.test(texto.replace(/jarvis/gi, "").trim())) pararTodo();
+          return;
+        }
         let texto = "";
         for (const r of Array.from(e.results ?? [])) texto += `${r?.[0]?.transcript ?? ""} `;
         if (!despiertoRef.current) {
@@ -393,7 +420,7 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
       manosLibresRef.current = false;
       parar();
     };
-  }, [manosLibres, enviar, decir, pararTodo]);
+  }, [manosLibres, enviar, decir, pararTodo, agregarMensaje]);
 
   // Dormir la IA: libera la GPU; despierta sola al hablarle
   async function dormir() {

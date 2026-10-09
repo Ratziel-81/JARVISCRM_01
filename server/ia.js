@@ -362,7 +362,7 @@ async function ejecutarHerramienta(name, args = {}) {
 }
 
 // ---------- cliente Ollama ----------
-async function ollamaChat({ model, messages, tools, think, numCtx = 4096, temp = 0.3 }) {
+async function ollamaChat({ model, messages, tools, think, numCtx = 4096, temp = 0.3, signal }) {
   const t0 = Date.now();
   const res = await fetch(`${OLLAMA_URL}/api/chat`, {
     method: "POST",
@@ -376,6 +376,7 @@ async function ollamaChat({ model, messages, tools, think, numCtx = 4096, temp =
       keep_alive: "30m",
       options: { num_ctx: numCtx, temperature: temp },
     }),
+    signal,
   });
   if (!res.ok) throw new Error(`Ollama ${res.status}`);
   const data = await res.json();
@@ -425,7 +426,7 @@ export async function dormirIA() {
 }
 
 // ---------- VOZ: respuesta instantánea con resumen de contexto ----------
-export async function voz(mensaje, historial = []) {
+export async function voz(mensaje, historial = [], signal) {
   const ctx = resumenCartera();
   const system = `Eres la VOZ de J.A.R.V.I.S. CRM, hablas con un comercial. Respuestas de 2 a 4 líneas, directas y accionables, en español.
 Foto de la cartera hoy: ${ctx.clientes} clientes, ${ctx.oportunidades_abiertas} oportunidades abiertas por ${ctx.pipeline_eur}€, ${ctx.ofertas_activas} ofertas activas, ${ctx.tareas_pendientes} tareas pendientes, ${ctx.acciones_hoy} acciones hoy.
@@ -435,7 +436,7 @@ Si te piden análisis profundo, agenda u ofertas a medida, sugiere usar el CEREB
     ...historial.slice(-8).map((h) => ({ role: h.rol === "yo" ? "user" : "assistant", content: h.texto })),
     { role: "user", content: mensaje },
   ];
-  const r = await ollamaChat({ model: VOZ, messages, think: false });
+  const r = await ollamaChat({ model: VOZ, messages, think: false, signal });
   return { respuesta: r.message.content.trim(), modelo: VOZ, ms: r.ms };
 }
 
@@ -451,7 +452,7 @@ También puedes buscar información externa en internet (buscar_web) y leer pág
 REGLA: si el usuario pide explícitamente buscar en internet, leer una página o datos actuales/externos, USA OBLIGATORIAMENTE buscar_web o leer_web antes de responder. No respondas de memoria cuando te pidan consultar la web.
 Hoy es ${hoyISO()}. Responde en español, estructurado con titulares y bullets, máximo 250 palabras.`;
 
-export async function cerebro(pregunta, historial = []) {
+export async function cerebro(pregunta, historial = [], signal) {
   const t0 = Date.now();
   const messages = [
     { role: "system", content: SISTEMA_CEREBRO },
@@ -462,7 +463,8 @@ export async function cerebro(pregunta, historial = []) {
   let navegar = null;
   let final = "";
   for (let i = 0; i < 6; i++) {
-    const r = await ollamaChat({ model: CEREBRO, messages, tools: TOOLS, think: true, numCtx: 8192, temp: 0.4 });
+    if (signal?.aborted) throw new DOMException("petición abortada", "AbortError");
+    const r = await ollamaChat({ model: CEREBRO, messages, tools: TOOLS, think: true, numCtx: 8192, temp: 0.4, signal });
     const msg = r.message;
     messages.push(msg);
     const calls = msg.tool_calls ?? [];
@@ -496,9 +498,11 @@ export async function cerebro(pregunta, historial = []) {
         { role: "user", content: final.slice(0, 4000) },
       ],
       think: false,
+      signal,
     });
     presentacion = v.message.content.trim() || final;
-  } catch {
+  } catch (e) {
+    if (e?.name === "AbortError") throw e;
     /* si falla la voz, se sirve el análisis tal cual */
   }
   return {
