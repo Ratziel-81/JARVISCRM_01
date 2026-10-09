@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { PRIORIDAD_STYLES, etapasPipeline, formatEur, oportunidades, type EtapaPipeline, type Oportunidad } from "../../data/mockData";
 import { api } from "../../lib/api";
+import AvatarTile from "../common/AvatarTile";
 
 export default function SalesPipeline() {
   const [activeEtapa, setActiveEtapa] = useState<string | null>(null);
@@ -84,12 +85,7 @@ export default function SalesPipeline() {
               key={o.id}
               className="jarvis-row group flex cursor-pointer items-center gap-3 rounded-xl p-3"
             >
-            <span
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-              style={{ background: `linear-gradient(135deg, ${o.avatarColor}, #0b1526)`, boxShadow: "inset 0 1px 0 rgba(255,255,255,.25)" }}
-            >
-              {o.iniciales}
-            </span>
+            <AvatarTile color={o.avatarColor} iniciales={o.iniciales} />
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-semibold text-slate-100">{o.empresa}</span>
               <span className="mt-0.5 block font-mono text-xs text-slate-400">

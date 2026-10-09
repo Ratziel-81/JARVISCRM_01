@@ -8,6 +8,7 @@ import {
   type Cobertura,
   type EstadoCliente,
 } from "../data/mockData";
+import AvatarTile from "../components/common/AvatarTile";
 import { api } from "../lib/api";
 import { CARA_STYLE, estadoCobertura, fmtFecha, type Cara } from "../lib/cobertura";
 
@@ -29,19 +30,6 @@ const CARA_ICON: Record<Cara, typeof Smile> = {
   sin: Minus,
   baja: UserX,
 };
-
-function Avatar({ c, size = "md" }: { c: Cliente; size?: "sm" | "md" | "lg" }) {
-  const cls = size === "lg" ? "h-14 w-14 text-base" : size === "sm" ? "h-8 w-8 text-[11px]" : "h-10 w-10 text-xs";
-  return (
-    <span
-      className={`jarvis-avatar flex shrink-0 items-center justify-center rounded-xl font-bold text-white ${cls}`}
-      style={{ background: `linear-gradient(135deg, ${c.avatarColor}, #0b1526)` }}
-      aria-hidden
-    >
-      {c.iniciales}
-    </span>
-  );
-}
 
 function CaraCobertura({ c, size = 20 }: { c: Cliente; size?: number }) {
   const st = estadoCobertura(c);
@@ -333,7 +321,7 @@ export default function ClientesPage() {
                 <tr key={c.id} className="border-b border-white/5 transition last:border-0 hover:bg-cyan-300/[.04]">
                   <td className="px-4 py-2.5">
                     <div className="flex items-center gap-3">
-                      <Avatar c={c} />
+                      <AvatarTile color={c.avatarColor} iniciales={c.iniciales} />
                       <div className="min-w-0">
                         <p className="truncate font-semibold text-slate-100">{c.nombre}</p>
                         <p className="truncate text-xs text-slate-500">{c.empresa}</p>
@@ -367,7 +355,7 @@ export default function ClientesPage() {
               <article key={c.id} className="jarvis-panel jarvis-panel-hover p-5">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-3">
-                    <Avatar c={c} size="lg" />
+                    <AvatarTile color={c.avatarColor} iniciales={c.iniciales} size="lg" />
                     <div className="min-w-0">
                       <h3 className="truncate font-bold text-slate-100">{c.nombre}</h3>
                       <p className="truncate text-xs text-slate-400">{c.empresa}</p>
@@ -403,7 +391,7 @@ export default function ClientesPage() {
           {filtrados.map((c) => (
             <li key={c.id} className="flex items-center gap-3 px-4 py-2.5 transition hover:bg-cyan-300/[.04]">
               <CaraCobertura c={c} size={18} />
-              <Avatar c={c} size="sm" />
+              <AvatarTile color={c.avatarColor} iniciales={c.iniciales} size="sm" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-slate-100">{c.nombre} <span className="font-normal text-slate-500">· {c.empresa}</span></p>
                 <p className="font-mono text-[10px] text-slate-600">Alta {fmtFecha(c.fechaAlta)}</p>
