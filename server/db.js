@@ -112,7 +112,7 @@ CREATE TABLE IF NOT EXISTS coberturas (
 `);
 
 // ---------- migración: cobertura y fechas en clientes ----------
-for (const col of ["cobertura_id TEXT REFERENCES coberturas(id)", "fecha_alta TEXT", "fecha_baja TEXT", "ultimo_contacto TEXT", "razon_social TEXT DEFAULT ''"]) {
+for (const col of ["cobertura_id TEXT REFERENCES coberturas(id)", "fecha_alta TEXT", "fecha_baja TEXT", "ultimo_contacto TEXT", "razon_social TEXT DEFAULT ''", "cif TEXT DEFAULT ''", "sector TEXT DEFAULT ''", "web TEXT DEFAULT ''", "direccion TEXT DEFAULT ''"]) {
   try {
     db.exec(`ALTER TABLE clientes ADD COLUMN ${col}`);
   } catch {

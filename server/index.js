@@ -137,9 +137,13 @@ app.post("/api/clientes", (req, res) => {
     fecha_baja: pick(b, "fechaBaja", "fecha_baja", null),
     ultimo_contacto: pick(b, "ultimoContacto", "ultimo_contacto", null),
     razon_social: pick(b, "razonSocial", "razon_social", b.empresa ?? "") || "",
+    direccion: pick(b, "direccion", "direccion", "") || "",
+    cif: pick(b, "cif", "cif", "") || "",
+    sector: pick(b, "sector", "sector", "") || "",
+    web: pick(b, "web", "web", "") || "",
   };
   db.prepare(
-    "INSERT INTO clientes (id,nombre,empresa,email,telefono,estado,hace,avatar_color,iniciales,valor,cobertura_id,fecha_alta,fecha_baja,ultimo_contacto,razon_social) VALUES (@id,@nombre,@empresa,@email,@telefono,@estado,@hace,@avatar_color,@iniciales,@valor,@cobertura_id,@fecha_alta,@fecha_baja,@ultimo_contacto,@razon_social)",
+    "INSERT INTO clientes (id,nombre,empresa,email,telefono,estado,hace,avatar_color,iniciales,valor,cobertura_id,fecha_alta,fecha_baja,ultimo_contacto,razon_social,cif,sector,web,direccion) VALUES (@id,@nombre,@empresa,@email,@telefono,@estado,@hace,@avatar_color,@iniciales,@valor,@cobertura_id,@fecha_alta,@fecha_baja,@ultimo_contacto,@razon_social,@cif,@sector,@web,@direccion)",
   ).run(row);
   res.status(201).json(clienteConCobertura(row.id));
 });
@@ -160,10 +164,14 @@ app.put("/api/clientes/:id", (req, res) => {
     fecha_baja: ("fechaBaja" in b || "fecha_baja" in b ? pick(b, "fechaBaja", "fecha_baja", null) : cur.fecha_baja),
     ultimo_contacto: ("ultimoContacto" in b || "ultimo_contacto" in b ? pick(b, "ultimoContacto", "ultimo_contacto", null) : cur.ultimo_contacto),
     razon_social: pick(b, "razonSocial", "razon_social", cur.razon_social ?? cur.empresa ?? ""),
+    direccion: pick(b, "direccion", "direccion", cur.direccion ?? ""),
+    cif: pick(b, "cif", "cif", cur.cif ?? ""),
+    sector: pick(b, "sector", "sector", cur.sector ?? ""),
+    web: pick(b, "web", "web", cur.web ?? ""),
     id: req.params.id,
   };
   db.prepare(
-    "UPDATE clientes SET nombre=@nombre,empresa=@empresa,email=@email,telefono=@telefono,estado=@estado,valor=@valor,cobertura_id=@cobertura_id,fecha_alta=@fecha_alta,fecha_baja=@fecha_baja,ultimo_contacto=@ultimo_contacto,razon_social=@razon_social WHERE id=@id",
+    "UPDATE clientes SET nombre=@nombre,empresa=@empresa,email=@email,telefono=@telefono,estado=@estado,valor=@valor,cobertura_id=@cobertura_id,fecha_alta=@fecha_alta,fecha_baja=@fecha_baja,ultimo_contacto=@ultimo_contacto,razon_social=@razon_social,cif=@cif,sector=@sector,web=@web,direccion=@direccion WHERE id=@id",
   ).run(row);
   res.json(clienteConCobertura(req.params.id));
 });

@@ -59,7 +59,7 @@ export default function FichaClientePage() {
   const [formOp, setFormOp] = useState({ empresa: "", importe: "", prioridad: "Media", probabilidad: "20" });
   const [formOf, setFormOf] = useState({ oportunidadId: "", titulo: "", importe: "", fechaVencimiento: "" });
   const [formAc, setFormAc] = useState({ tipo: "llamada" as TipoAccion, titulo: "", fecha: hoyInput(), hora: "", detalle: "" });
-  const [formCl, setFormCl] = useState({ nombre: "", empresa: "", razonSocial: "", email: "", telefono: "", estado: "Prospecto" as EstadoCliente, valor: "", coberturaId: "", fechaAlta: "", fechaBaja: "" });
+  const [formCl, setFormCl] = useState({ nombre: "", empresa: "", razonSocial: "", cif: "", sector: "", web: "", direccion: "", email: "", telefono: "", estado: "Prospecto" as EstadoCliente, valor: "", coberturaId: "", fechaAlta: "", fechaBaja: "" });
   const [editandoContactoId, setEditandoContactoId] = useState<string | null>(null);
   const [formCt, setFormCt] = useState({ nombre: "", apellidos: "", email: "", telFijo: "", telMovil: "", telEmpresa: "", extension: "", tipo: "Sin definir" as TipoContacto, puesto: "" });
   useFijarContextoIA("cliente", id, cliente?.nombre);
@@ -129,6 +129,10 @@ export default function FichaClientePage() {
       nombre: cliente.nombre,
       empresa: cliente.empresa ?? "",
       razonSocial: cliente.razonSocial ?? "",
+      cif: cliente.cif ?? "",
+      sector: cliente.sector ?? "",
+      web: cliente.web ?? "",
+      direccion: cliente.direccion ?? "",
       email: cliente.email ?? "",
       telefono: cliente.telefono ?? "",
       estado: cliente.estado,
@@ -524,6 +528,10 @@ export default function FichaClientePage() {
           { t: "Alta / Baja", v: `${fmtFecha(cliente.fechaAlta)}${cliente.fechaBaja ? ` → ${fmtFecha(cliente.fechaBaja)}` : ""}` },
           { t: "Cobertura", v: cliente.coberturaNombre ?? (cliente.coberturaId ? `Tipo ${cliente.coberturaId}` : "Sin cobertura") },
           { t: "Razón social", v: cliente.razonSocial || "—" },
+          { t: "CIF", v: cliente.cif || "—" },
+          { t: "Sector", v: cliente.sector || "—" },
+          { t: "Web", v: cliente.web || "—" },
+          { t: "Dirección", v: cliente.direccion || "—" },
         ].map((f) => (
           <div key={f.t}>
             <p className="section-title">{f.t}</p>
@@ -572,6 +580,10 @@ export default function FichaClientePage() {
                 { k: "nombre", label: "Nombre comercial *", ph: "" },
                 { k: "empresa", label: "Empresa", ph: "" },
                 { k: "razonSocial", label: "Razón social", ph: "" },
+                { k: "cif", label: "CIF", ph: "B12345678" },
+                { k: "sector", label: "Sector", ph: "Ej. Hostelería" },
+                { k: "web", label: "Web", ph: "https://…" },
+                { k: "direccion", label: "Dirección", ph: "" },
                 { k: "email", label: "Email", ph: "" },
                 { k: "telefono", label: "Teléfono", ph: "" },
               ] as const

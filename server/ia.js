@@ -262,6 +262,68 @@ async function leerWeb(url) {
   }
 }
 
+// Extracción determinista de ficha de empresa (estilo empresite/informa):
+// razón social, CIF, forma jurídica, actividad, dirección, teléfono, email.
+export function extraerFichaEmpresa(texto) {
+  const out = {};
+  const primero = texto.slice(0, 300);
+  const mRazon = primero.match(/^(.+?)\s+-\s+CIF/i) || texto.match(/Razón social\s+([^\n]{2,80})/i);
+  if (mRazon) out.razon_social = mRazon[1].replace(/\s*\|\s*Empresite\s*$/i, "").trim();
+  const mCif = texto.match(/\b([ABCDEFGHJNPQRSUVW]\d{7}[0-9A-J])\b/);
+  if (mCif) out.cif = mCif[1];
+  const mAct = texto.match(/Actividad\s+([^\n]{2,80}?)(?:\s+Actividad CNAE|\s+Estado|\n|$)/i);
+  if (mAct) out.sector = mAct[1].trim();
+  const mTel = texto.match(/(?:Teléfono|Telefono|Telf|Tfno|Tel)\.?\s*:?\s*([+\d][\d\s./-]{8,18})/i);
+  if (mTel) out.telefono = mTel[1].trim();
+  const mMail = texto.match(/[\w.+-]+@[\w-]+\.[\w.]+/);
+  if (mMail && !/empresite|example|test/i.test(mMail[0])) out.email = mMail[0];
+  const mDir = texto.match(/Dirección(?:\s+y contacto)?\s+([^\n]{5,120}?)(?:\s+Información|\s+Datos|\n|$)/i);
+  if (mDir && !/conozca/i.test(mDir[1])) out.direccion = mDir[1].trim();
+  Object.keys(out).forEach((k) => out[k] === undefined && delete out[k]);
+  return out;
+}
+
+async function importarEmpresaWeb(url, clienteId) {
+  const cli = clienteId ? db.prepare("SELECT * FROM clientes WHERE id=?").get(clienteId) : null;
+  if (clienteId && !cli) return { error: "ese cliente no existe" };
+  let leido = await leerWeb(url);
+  for (const espera of [30000, 90000]) {
+    if (!leido.error || !/429/.test(leido.error)) break;
+    // empresite limita el ritmo: reintentos espaciados
+    await new Promise((r) => setTimeout(r, espera));
+    leido = await leerWeb(url);
+  }
+  if (leido.error) return { ...leido, indica: "si es un 429, empresite está limitando esta IP: espera unos 10 minutos y repite la importación" };
+  const datos = extraerFichaEmpresa(leido.texto);
+  if (Object.keys(datos).length === 0) {
+    return { url: leido.url, importado: false, motivo: "no se reconocieron datos de empresa en la página" };
+  }
+  const set = [];
+  const vals = [];
+  // registro mercantil manda: razón social, CIF y sector siempre;
+  // teléfono y email solo si la ficha los tiene vacíos (no se pisan)
+  for (const k of ["razon_social", "cif", "sector", "direccion"]) {
+    if (datos[k]) {
+      set.push(`${k}=?`);
+      vals.push(datos[k]);
+    }
+  }
+  if (datos.telefono && !cli.telefono) {
+    set.push("telefono=?");
+    vals.push(datos.telefono);
+  }
+  if (datos.email && !cli.email) {
+    set.push("email=?");
+    vals.push(datos.email);
+  }
+  let actualizado = false;
+  if (cli && set.length > 0) {
+    db.prepare(`UPDATE clientes SET ${set.join(", ")} WHERE id=?`).run(...vals, cli.id);
+    actualizado = true;
+  }
+  return { url: leido.url, importado: actualizado, cliente: cli?.nombre ?? null, datos };
+}
+
 const TOOLS = [
   { type: "function", function: { name: "resumen_cartera", description: "Foto global: nº clientes, pipeline abierto en €, ofertas activas, tareas pendientes y acciones de hoy.", parameters: { type: "object", properties: {} } } },
   { type: "function", function: { name: "lista_oportunidades", description: "Lista oportunidades con etapa, importe y probabilidad. Estado: Abierta, Ganada, Perdida o Todas.", parameters: { type: "object", properties: { estado: { type: "string" } } } } },
@@ -273,12 +335,13 @@ const TOOLS = [
   { type: "function", function: { name: "tareas_pendientes", description: "Tareas pendientes ordenadas por fecha.", parameters: { type: "object", properties: {} } } },
   { type: "function", function: { name: "buscar_web", description: "Busca información en internet (respuestas directas y temas; calidad variable, sin clave). Úsalo para datos externos: tipos de interés, noticias, definiciones.", parameters: { type: "object", properties: { q: { type: "string", description: "consulta" } } } } },
   { type: "function", function: { name: "leer_web", description: "Lee el texto de una página web (noticia, ficha de producto, documentación). Devuelve hasta 8000 caracteres.", parameters: { type: "object", properties: { url: { type: "string", description: "URL completa" } } } } },
+  { type: "function", function: { name: "importar_empresa_web", description: "Lee una ficha de empresa (empresite, informa: el usuario te pasa el enlace) y vuelca razón social, CIF, sector, dirección, teléfono y email en la ficha del cliente visible (o el clienteId dado). Solo rellena teléfono/email si están vacíos.", parameters: { type: "object", properties: { url: { type: "string", description: "URL de la ficha" }, clienteId: { type: "string" } }, required: ["url"] } } },
   { type: "function", function: { name: "resolver_fecha", description: "Convierte una fecha en palabras (hoy, mañana, el jueves, el 15 de octubre) a YYYY-MM-DD. Úsala SIEMPRE para fechas relativas: no calcules días a mano.", parameters: { type: "object", properties: { texto: { type: "string", description: "la fecha tal como la dijo el usuario" } } } } },
   { type: "function", function: { name: "crear_cliente", description: "Crea un cliente. SOLO el nombre es obligatorio: crea con lo que tengas (empresa si la sabes) y no pidas email, teléfono ni valor.", parameters: { type: "object", properties: { nombre: { type: "string" }, empresa: { type: "string" }, email: { type: "string" }, telefono: { type: "string" }, estado: { type: "string", description: "Activo, Prospecto o En seguimiento" }, valor: { type: "number" } }, required: ["nombre"] } } },
   { type: "function", function: { name: "crear_accion", description: "Crea una llamada, reunión, visita o tarea con fecha y hora. Si falta la hora, PREGUNTA antes de crear (no la inventes).", parameters: { type: "object", properties: { tipo: { type: "string", description: "llamada, reunion, visita o tarea" }, titulo: { type: "string" }, empresa: { type: "string" }, fecha: { type: "string", description: "YYYY-MM-DD (usa resolver_fecha)" }, hora: { type: "string", description: "HH:MM, solo si el usuario la dijo" }, detalle: { type: "string" } }, required: ["tipo", "fecha"] } } },
   { type: "function", function: { name: "ir_a", description: "Lleva al usuario a una parte de la app. Úsala cuando pida abrir, ver o ir a un módulo. Para la pantalla de crear cliente usa /clientes?nuevo=1.", parameters: { type: "object", properties: { ruta: { type: "string", description: "una de: /, /dashboard, /clientes, /clientes?nuevo=1, /oportunidades, /ofertas, /acciones, /calendario, /tareas, /kpis, /informes, /configuracion" } }, required: ["ruta"] } } },
   { type: "function", function: { name: "abrir_cliente", description: "Abre la ficha de un cliente por su nombre o empresa. Si hay varios candidatos, pregunta cuál.", parameters: { type: "object", properties: { q: { type: "string", description: "nombre o empresa a buscar" } }, required: ["q"] } } },
-  { type: "function", function: { name: "actualizar_cliente", description: "Modifica el cliente visible (o el id dado): nombre, empresa, razón social, email, teléfono, estado, valor. Si no te dan id, se usa el de la pantalla.", parameters: { type: "object", properties: { id: { type: "string" }, nombre: { type: "string" }, empresa: { type: "string" }, razonSocial: { type: "string" }, email: { type: "string" }, telefono: { type: "string" }, estado: { type: "string" }, valor: { type: "number" } } } } },
+  { type: "function", function: { name: "actualizar_cliente", description: "Modifica el cliente visible (o el id dado): nombre, empresa, razón social, CIF, sector, web, dirección, email, teléfono, estado, valor. Si no te dan id, se usa el de la pantalla.", parameters: { type: "object", properties: { id: { type: "string" }, nombre: { type: "string" }, empresa: { type: "string" }, razonSocial: { type: "string" }, cif: { type: "string" }, sector: { type: "string" }, web: { type: "string" }, direccion: { type: "string" }, email: { type: "string" }, telefono: { type: "string" }, estado: { type: "string" }, valor: { type: "number" } } } } },
   { type: "function", function: { name: "borrar_cliente", description: "Borra un cliente. Flujo OBLIGATORIO en 2 pasos: 1) llámala SIN confirmado para obtener la pregunta exacta y haz ESA pregunta al usuario; 2) solo cuando diga sí/vale/confirmo, vuelve a llamarla CON confirmado:true. PROHIBIDO borrar sin el sí.", parameters: { type: "object", properties: { id: { type: "string" }, confirmado: { type: "boolean" } } } } },
   { type: "function", function: { name: "actualizar_accion", description: "Modifica la acción visible (o el id dado): título, fecha, hora, detalle, estado, prioridad, responsable.", parameters: { type: "object", properties: { id: { type: "string" }, titulo: { type: "string" }, fecha: { type: "string" }, hora: { type: "string" }, detalle: { type: "string" }, estado: { type: "string" }, prioridad: { type: "string" }, responsable: { type: "string" } } } } },
   { type: "function", function: { name: "borrar_accion", description: "Borra una acción. Flujo OBLIGATORIO en 2 pasos: 1) llámala SIN confirmado para obtener la pregunta exacta y haz ESA pregunta; 2) solo con el sí, repite CON confirmado:true. PROHIBIDO borrar sin el sí.", parameters: { type: "object", properties: { id: { type: "string" }, confirmado: { type: "boolean" } } } } },
@@ -315,6 +378,11 @@ async function ejecutarHerramienta(name, args = {}, ctx = {}) {
       return await buscarWeb(args.q ?? "");
     case "leer_web":
       return await leerWeb(args.url ?? "");
+    case "importar_empresa_web": {
+      const cid = args.clienteId || idCtx("cliente");
+      if (!cid) return { error: "no sé a qué cliente importar: pide cuál o abre su ficha" };
+      return await importarEmpresaWeb(args.url ?? "", cid);
+    }
     case "resolver_fecha":
       return resolverFecha(args.texto ?? "");
     case "crear_cliente": {
@@ -385,11 +453,11 @@ async function ejecutarHerramienta(name, args = {}, ctx = {}) {
       const cur = db.prepare("SELECT * FROM clientes WHERE id=?").get(id);
       if (!cur) return { error: "ese cliente no existe" };
       const cambios = {};
-      for (const k of ["nombre", "empresa", "razonSocial", "email", "telefono", "estado", "valor"]) {
+      for (const k of ["nombre", "empresa", "razonSocial", "cif", "sector", "web", "direccion", "email", "telefono", "estado", "valor"]) {
         if (args[k] !== undefined) cambios[k] = args[k];
       }
       if (Object.keys(cambios).length === 0) return { error: "no me dices qué cambiar" };
-      const col = { nombre: "nombre", empresa: "empresa", razonSocial: "razon_social", email: "email", telefono: "telefono", estado: "estado", valor: "valor" };
+      const col = { nombre: "nombre", empresa: "empresa", razonSocial: "razon_social", cif: "cif", sector: "sector", web: "web", direccion: "direccion", email: "email", telefono: "telefono", estado: "estado", valor: "valor" };
       const set = Object.keys(cambios).map((k) => `${col[k]}=?`).join(", ");
       const vals = Object.keys(cambios).map((k) => (k === "valor" ? Number(cambios[k]) || 0 : cambios[k]));
       db.prepare(`UPDATE clientes SET ${set} WHERE id=?`).run(...vals, id);
@@ -599,6 +667,8 @@ Para abrir la ficha de un cliente concreto usa abrir_cliente con su nombre;
 para la pantalla de crear cliente usa ir_a con /clientes?nuevo=1.
 También puedes buscar información externa en internet (buscar_web) y leer páginas concretas (leer_web): úsalo para datos que no estén en la base de datos (tipos, noticias, definiciones) y cita la fuente.
 REGLA: si el usuario pide explícitamente buscar en internet, leer una página o datos actuales/externos, USA OBLIGATORIAMENTE buscar_web o leer_web antes de responder. No respondas de memoria cuando te pidan consultar la web.
+Para traer datos de una empresa (empresite, informa) a la ficha: pide el ENLACE de su ficha si no te lo dan y usa importar_empresa_web con el cliente visible (rellena razón social, CIF, sector, dirección y lo que falte).
+Si una herramienta devuelve error, dilo claro con su motivo e indicación: no inventes ni divagues.
 Hoy es ${hoyISO()}. Responde en español, estructurado con titulares y bullets, máximo 250 palabras.`;
 
 export async function cerebro(pregunta, historial = [], signal, contexto = {}) {

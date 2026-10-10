@@ -107,7 +107,12 @@ palabras como "el jueves"), `crear_cliente`, `crear_accion` (llamadas,
 reuniones, visitas, tareas), `crear_oportunidad`, `crear_oferta`,
 `actualizar_cliente`, `borrar_cliente`, `actualizar_accion`, `borrar_accion`
 (los borrados piden confirmación primero), `cerrar_oportunidad`,
-`reabrir_oportunidad`, `abrir_cliente` e `ir_a` (navegación). Recibe el contexto
+`reabrir_oportunidad`, `abrir_cliente` e `ir_a` (navegación), más
+`importar_empresa_web {url, clienteId?}`: lee una ficha de empresa (empresite
+y similares) y vuelca razón social, CIF, sector, dirección, teléfono y email
+en la ficha (el teléfono/email solo si están vacíos). Pídele a JARVIS el
+enlace si no lo tienes: el buscador automático no es viable (esas webs
+limitan por ritmo y exigen login para teléfono/email). Recibe el contexto
 de pantalla (ruta + ficha visible) y presupone que añadir, modificar o eliminar
 se refiere a lo mostrado salvo que le digas otra cosa. Si falta un dato
 (p. ej. la hora), lo pregunta y completa en el turno siguiente con el contexto. Botón de oreja para **manos libres**: escucha en
