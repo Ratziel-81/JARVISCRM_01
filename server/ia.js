@@ -341,6 +341,7 @@ const TOOLS = [
   { type: "function", function: { name: "crear_accion", description: "Crea una llamada, reunión, visita o tarea con fecha y hora. Si falta la hora, PREGUNTA antes de crear (no la inventes).", parameters: { type: "object", properties: { tipo: { type: "string", description: "llamada, reunion, visita o tarea" }, titulo: { type: "string" }, empresa: { type: "string" }, fecha: { type: "string", description: "YYYY-MM-DD (usa resolver_fecha)" }, hora: { type: "string", description: "HH:MM, solo si el usuario la dijo" }, detalle: { type: "string" } }, required: ["tipo", "fecha"] } } },
   { type: "function", function: { name: "ir_a", description: "Lleva al usuario a una parte de la app. Úsala cuando pida abrir, ver o ir a un módulo. Para la pantalla de crear cliente usa /clientes?nuevo=1.", parameters: { type: "object", properties: { ruta: { type: "string", description: "una de: /, /dashboard, /clientes, /clientes?nuevo=1, /oportunidades, /ofertas, /acciones, /calendario, /tareas, /kpis, /informes, /configuracion" } }, required: ["ruta"] } } },
   { type: "function", function: { name: "abrir_cliente", description: "Abre la ficha de un cliente por su nombre o empresa. Si hay varios candidatos, pregunta cuál.", parameters: { type: "object", properties: { q: { type: "string", description: "nombre o empresa a buscar" } }, required: ["q"] } } },
+  { type: "function", function: { name: "datos_gemini", description: "Prepara la búsqueda de datos de una empresa en Gemini (web sin registro). La app muestra los botones para copiar la pregunta y abrir Gemini. Úsala cuando pidan buscar/traer datos de Gemini.", parameters: { type: "object", properties: { empresa: { type: "string", description: "empresa (sale de la visible si no la dan)" } } } } },
   { type: "function", function: { name: "actualizar_cliente", description: "Modifica el cliente visible (o el id dado): nombre, empresa, razón social, CIF, sector, web, dirección, email, teléfono, estado, valor. Si no te dan id, se usa el de la pantalla.", parameters: { type: "object", properties: { id: { type: "string" }, nombre: { type: "string" }, empresa: { type: "string" }, razonSocial: { type: "string" }, cif: { type: "string" }, sector: { type: "string" }, web: { type: "string" }, direccion: { type: "string" }, email: { type: "string" }, telefono: { type: "string" }, estado: { type: "string" }, valor: { type: "number" } } } } },
   { type: "function", function: { name: "borrar_cliente", description: "Borra un cliente. Flujo OBLIGATORIO en 2 pasos: 1) llámala SIN confirmado para obtener la pregunta exacta y haz ESA pregunta al usuario; 2) solo cuando diga sí/vale/confirmo, vuelve a llamarla CON confirmado:true. PROHIBIDO borrar sin el sí.", parameters: { type: "object", properties: { id: { type: "string" }, confirmado: { type: "boolean" } } } } },
   { type: "function", function: { name: "actualizar_accion", description: "Modifica la acción visible (o el id dado): título, fecha, hora, detalle, estado, prioridad, responsable.", parameters: { type: "object", properties: { id: { type: "string" }, titulo: { type: "string" }, fecha: { type: "string" }, hora: { type: "string" }, detalle: { type: "string" }, estado: { type: "string" }, prioridad: { type: "string" }, responsable: { type: "string" } } } } },
@@ -446,6 +447,15 @@ async function ejecutarHerramienta(name, args = {}, ctx = {}) {
       if (cands.length === 0) return { error: `no encuentro ningún cliente "${args.q}"` };
       if (cands.length === 1) return { navegar: `/clientes/${cands[0].id}`, cliente: cands[0].nombre };
       return { candidatos: cands.map((c) => ({ id: c.id, nombre: c.nombre, empresa: c.empresa })), indica: "hay varios candidatos: pregunta al usuario cuál quiere abrir" };
+    }
+    case "datos_gemini": {
+      let empresa = args.empresa;
+      if (!empresa && idCtx("cliente")) {
+        const c = db.prepare("SELECT nombre, empresa FROM clientes WHERE id=?").get(idCtx("cliente"));
+        empresa = c?.empresa || c?.nombre;
+      }
+      if (!empresa?.trim()) return { error: "no sé de qué empresa: pide cuál" };
+      return { prompt_gemini: true, empresa: empresa.trim() };
     }
     case "actualizar_cliente": {
       const id = args.id || idCtx("cliente");
@@ -681,6 +691,7 @@ export async function cerebro(pregunta, historial = [], signal, contexto = {}) {
   ];
   const usadas = [];
   let navegar = null;
+  let accionGemini = null;
   let final = "";
   for (let i = 0; i < 6; i++) {
     if (signal?.aborted) throw new DOMException("petición abortada", "AbortError");
@@ -704,6 +715,7 @@ export async function cerebro(pregunta, historial = [], signal, contexto = {}) {
         resultado = { error: `la herramienta ${c.function.name} falló: ${e.message}` };
       }
       if (resultado && resultado.navegar) navegar = resultado.navegar;
+      if (resultado && resultado.prompt_gemini) accionGemini = { empresa: resultado.empresa };
       messages.push({ role: "tool", content: JSON.stringify(resultado).slice(0, 6000) });
     }
   }
@@ -730,6 +742,7 @@ export async function cerebro(pregunta, historial = [], signal, contexto = {}) {
     analisis: final,
     herramientas: [...new Set(usadas)],
     navegar,
+    accion_gemini: accionGemini,
     modelo: `${CEREBRO} + ${VOZ}`,
     ms: Date.now() - t0,
   };

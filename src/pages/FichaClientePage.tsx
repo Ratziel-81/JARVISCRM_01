@@ -20,6 +20,7 @@ import {
 } from "../data/mockData";
 import { api } from "../lib/api";
 import { CARA_STYLE, estadoCobertura, fmtFecha, type Cara } from "../lib/cobertura";
+import { abrirGemini, construirPromptGemini, copiarTexto, parsearRespuestaGemini, type DatoGemini } from "../lib/gemini";
 import { useFijarContextoIA } from "../lib/contextoIA";
 
 // Vincula por nombre normalizado (sin S.L./S.A., tildes ni signos)
@@ -62,6 +63,9 @@ export default function FichaClientePage() {
   const [formCl, setFormCl] = useState({ nombre: "", empresa: "", razonSocial: "", cif: "", sector: "", web: "", direccion: "", email: "", telefono: "", estado: "Prospecto" as EstadoCliente, valor: "", coberturaId: "", fechaAlta: "", fechaBaja: "" });
   const [editandoContactoId, setEditandoContactoId] = useState<string | null>(null);
   const [formCt, setFormCt] = useState({ nombre: "", apellidos: "", email: "", telFijo: "", telMovil: "", telEmpresa: "", extension: "", tipo: "Sin definir" as TipoContacto, puesto: "" });
+  const [pegadoGemini, setPegadoGemini] = useState("");
+  const [parseoGemini, setParseoGemini] = useState<{ datos: DatoGemini; encontrados: string[] } | null>(null);
+  const [copiado, setCopiado] = useState(false);
   useFijarContextoIA("cliente", id, cliente?.nombre);
 
   async function recargar() {
@@ -298,6 +302,48 @@ export default function FichaClientePage() {
   const inputCls =
     "w-full rounded-xl border border-cyan-300/15 bg-white/[.04] px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600 outline-none focus:border-cyan-300/50";
   const selectCls = "w-full rounded-xl border border-cyan-300/15 bg-[#041321] px-3 py-2 text-sm text-slate-100 outline-none";
+
+  async function buscarEnGemini() {
+    if (!cliente) return;
+    const ok = await copiarTexto(construirPromptGemini(cliente.empresa || cliente.nombre));
+    setCopiado(ok);
+    abrirGemini();
+    setTimeout(() => setCopiado(false), 4000);
+  }
+
+  function importarDeGemini() {
+    setParseoGemini(parsearRespuestaGemini(pegadoGemini));
+  }
+
+  async function aplicarGemini() {
+    if (!id || !parseoGemini || guardando) return;
+    setGuardando(true);
+    try {
+      const body: Record<string, unknown> = {};
+      const d = parseoGemini.datos;
+      if (d.nombre) body.nombre = d.nombre;
+      if (d.razonSocial) body.razonSocial = d.razonSocial;
+      if (d.cif) body.cif = d.cif;
+      if (d.sector) body.sector = d.sector;
+      if (d.direccion) body.direccion = d.direccion;
+      if (d.telefono) body.telefono = d.telefono;
+      if (d.email) body.email = d.email;
+      if (d.web) body.web = d.web;
+      const res = await fetch(`/api/clientes/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error();
+      await recargar();
+      setPegadoGemini("");
+      setParseoGemini(null);
+    } catch {
+      alert("No se pudo aplicar.");
+    } finally {
+      setGuardando(false);
+    }
+  }
 
   if (cargando) {
     return (
@@ -538,6 +584,55 @@ export default function FichaClientePage() {
             <p className="mt-1 break-words text-sm text-slate-200">{f.v}</p>
           </div>
         ))}
+      </section>
+
+      {/* importar de Gemini (no se puede embeber: X-Frame-Options DENY) */}
+      <section className="jarvis-panel space-y-3 p-5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 className="section-title">Importar de Gemini</h2>
+            <p className="mt-1 text-xs text-slate-500">1) Copia la pregunta y ábrela en Gemini · 2) Pega su respuesta · 3) Importa</p>
+          </div>
+          <button
+            onClick={buscarEnGemini}
+            className="flex items-center gap-2 rounded-xl border border-cyan-300/40 bg-cyan-300/10 px-4 py-2 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-300/20"
+          >
+            {copiado ? "¡Pregunta copiada!" : "Buscar en Gemini"}
+          </button>
+        </div>
+        <textarea
+          value={pegadoGemini}
+          onChange={(e) => {
+            setPegadoGemini(e.target.value);
+            setParseoGemini(null);
+          }}
+          rows={4}
+          placeholder="Pega aquí la respuesta de Gemini…"
+          className={`${inputCls} resize-y font-mono text-xs`}
+        />
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={importarDeGemini}
+            disabled={!pegadoGemini.trim()}
+            className="rounded-xl border border-white/10 bg-white/[.02] px-4 py-2 text-xs font-semibold text-slate-300 transition hover:border-cyan-300/40 hover:text-white disabled:opacity-40"
+          >
+            Leer datos pegados
+          </button>
+          {parseoGemini && (
+            <span className="font-mono text-[11px] text-slate-500">
+              {parseoGemini.encontrados.length === 0 ? "Nada reconocible." : `Entendido: ${parseoGemini.encontrados.join(", ")}`}
+            </span>
+          )}
+          {parseoGemini && parseoGemini.encontrados.length > 0 && (
+            <button
+              onClick={aplicarGemini}
+              disabled={guardando}
+              className="rounded-xl border border-emerald-300/40 bg-emerald-400/10 px-4 py-2 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-400/20 disabled:opacity-50"
+            >
+              {guardando ? "Aplicando…" : `Aplicar en ficha (${parseoGemini.encontrados.length})`}
+            </button>
+          )}
+        </div>
       </section>
 
       {/* modal editar */}

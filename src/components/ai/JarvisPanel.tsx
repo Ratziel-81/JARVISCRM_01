@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { respuestasIA } from "../../data/mockData";
 import { api } from "../../lib/api";
 import { leerContexto } from "../../lib/contextoIA";
+import { abrirGemini, construirPromptGemini, copiarTexto } from "../../lib/gemini";
 import AICore from "./AICore";
 import QuickActions from "./QuickActions";
 
@@ -12,6 +13,7 @@ interface Mensaje {
   de: "jarvis" | "user";
   texto: string;
   meta?: string;
+  accion?: { tipo: "gemini"; empresa: string };
 }
 
 type Mente = "voz" | "cerebro";
@@ -162,6 +164,7 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
   const [manosLibres, setManosLibres] = useState(false);
   const [despierto, setDespierto] = useState(false);
   const [input, setInput] = useState("");
+  const [copiadoId, setCopiadoId] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const recogRef = useRef<Reconocedor | null>(null);
   const manosLibresRef = useRef(false);
@@ -314,6 +317,7 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
             de: "jarvis",
             texto: d.respuesta,
             meta: `${d.modelo} · ${(d.ms / 1000).toFixed(1)}s · ${d.herramientas?.join(", ") ?? ""}`,
+            accion: d.accion_gemini ? { tipo: "gemini" as const, empresa: d.accion_gemini.empresa } : undefined,
           });
           if (d.navegar) navigate(d.navegar);
           decir(d.respuesta);
@@ -657,6 +661,27 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
             <div key={m.id} className="jarvis-msg rounded-xl rounded-tl-sm p-3 text-[13px] leading-relaxed">
               <span className="mb-1 block font-mono text-[10px] tracking-[0.2em] text-cyan-300">J.A.R.V.I.S.</span>
               <span className="whitespace-pre-wrap">“{m.texto}”</span>
+              {m.accion?.tipo === "gemini" && (
+                <span className="mt-2 flex gap-1.5">
+                  <button
+                    onClick={async () => {
+                      if (await copiarTexto(construirPromptGemini(m.accion!.empresa))) {
+                        setCopiadoId(m.id);
+                        setTimeout(() => setCopiadoId((v) => (v === m.id ? null : v)), 3000);
+                      }
+                    }}
+                    className="rounded-lg border border-cyan-300/40 bg-cyan-300/10 px-2.5 py-1.5 font-mono text-[10px] font-bold tracking-widest text-cyan-100 transition hover:bg-cyan-300/20"
+                  >
+                    {copiadoId === m.id ? "¡COPIADO!" : "COPIAR PREGUNTA"}
+                  </button>
+                  <button
+                    onClick={() => abrirGemini()}
+                    className="rounded-lg border border-white/10 bg-white/[.02] px-2.5 py-1.5 font-mono text-[10px] font-bold tracking-widest text-slate-300 transition hover:border-cyan-300/40 hover:text-white"
+                  >
+                    ABRIR GEMINI
+                  </button>
+                </span>
+              )}
               {m.meta && <span className="mt-1.5 block font-mono text-[9px] tracking-widest text-slate-500">{m.meta}</span>}
             </div>
           ) : (
