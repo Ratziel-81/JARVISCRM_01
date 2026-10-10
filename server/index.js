@@ -136,9 +136,10 @@ app.post("/api/clientes", (req, res) => {
     fecha_alta: pick(b, "fechaAlta", "fecha_alta", hoyISO()),
     fecha_baja: pick(b, "fechaBaja", "fecha_baja", null),
     ultimo_contacto: pick(b, "ultimoContacto", "ultimo_contacto", null),
+    razon_social: pick(b, "razonSocial", "razon_social", b.empresa ?? "") || "",
   };
   db.prepare(
-    "INSERT INTO clientes (id,nombre,empresa,email,telefono,estado,hace,avatar_color,iniciales,valor,cobertura_id,fecha_alta,fecha_baja,ultimo_contacto) VALUES (@id,@nombre,@empresa,@email,@telefono,@estado,@hace,@avatar_color,@iniciales,@valor,@cobertura_id,@fecha_alta,@fecha_baja,@ultimo_contacto)",
+    "INSERT INTO clientes (id,nombre,empresa,email,telefono,estado,hace,avatar_color,iniciales,valor,cobertura_id,fecha_alta,fecha_baja,ultimo_contacto,razon_social) VALUES (@id,@nombre,@empresa,@email,@telefono,@estado,@hace,@avatar_color,@iniciales,@valor,@cobertura_id,@fecha_alta,@fecha_baja,@ultimo_contacto,@razon_social)",
   ).run(row);
   res.status(201).json(clienteConCobertura(row.id));
 });
@@ -158,10 +159,11 @@ app.put("/api/clientes/:id", (req, res) => {
     fecha_alta: pick(b, "fechaAlta", "fecha_alta", cur.fecha_alta),
     fecha_baja: ("fechaBaja" in b || "fecha_baja" in b ? pick(b, "fechaBaja", "fecha_baja", null) : cur.fecha_baja),
     ultimo_contacto: ("ultimoContacto" in b || "ultimo_contacto" in b ? pick(b, "ultimoContacto", "ultimo_contacto", null) : cur.ultimo_contacto),
+    razon_social: pick(b, "razonSocial", "razon_social", cur.razon_social ?? cur.empresa ?? ""),
     id: req.params.id,
   };
   db.prepare(
-    "UPDATE clientes SET nombre=@nombre,empresa=@empresa,email=@email,telefono=@telefono,estado=@estado,valor=@valor,cobertura_id=@cobertura_id,fecha_alta=@fecha_alta,fecha_baja=@fecha_baja,ultimo_contacto=@ultimo_contacto WHERE id=@id",
+    "UPDATE clientes SET nombre=@nombre,empresa=@empresa,email=@email,telefono=@telefono,estado=@estado,valor=@valor,cobertura_id=@cobertura_id,fecha_alta=@fecha_alta,fecha_baja=@fecha_baja,ultimo_contacto=@ultimo_contacto,razon_social=@razon_social WHERE id=@id",
   ).run(row);
   res.json(clienteConCobertura(req.params.id));
 });
@@ -178,9 +180,75 @@ app.post("/api/clientes/:id/contacto", (req, res) => {
 app.delete("/api/clientes/:id", (req, res) => {
   const cur = db.prepare("SELECT * FROM clientes WHERE id=?").get(req.params.id);
   if (!cur) return res.status(404).json({ error: "cliente no encontrado" });
-  // desvincula sus acciones (las oportunidades/ofertas son por empresa y se conservan)
+  // desvincula sus acciones y borra sus contactos (las oportunidades/ofertas son por empresa y se conservan)
   db.prepare("UPDATE acciones SET cliente_id=NULL WHERE cliente_id=?").run(req.params.id);
+  db.prepare("DELETE FROM contactos WHERE cliente_id=?").run(req.params.id);
   db.prepare("DELETE FROM clientes WHERE id=?").run(req.params.id);
+  res.status(204).end();
+});
+
+// ---------- contactos: personas vinculadas al cliente ----------
+const TIPOS_CONTACTO = ["Financiero", "Gerencia", "Sin definir", "Técnico", "Comercial", "Administración"];
+const contactoDe = (id) => camel(db.prepare("SELECT * FROM contactos WHERE id=?").get(id));
+
+app.get("/api/clientes/:id/contactos", (req, res) => {
+  res.json(
+    db.prepare("SELECT * FROM contactos WHERE cliente_id=? ORDER BY nombre, apellidos").all(req.params.id).map(camel),
+  );
+});
+
+app.post("/api/clientes/:id/contactos", (req, res) => {
+  const cli = db.prepare("SELECT * FROM clientes WHERE id=?").get(req.params.id);
+  if (!cli) return res.status(404).json({ error: "cliente no encontrado" });
+  const b = req.body ?? {};
+  if (!b.nombre?.trim()) return res.status(400).json({ error: "nombre requerido" });
+  const tipo = TIPOS_CONTACTO.includes(b.tipo) ? b.tipo : "Sin definir";
+  const row = {
+    id: b.id ?? newId("ct"),
+    cliente_id: req.params.id,
+    nombre: b.nombre.trim(),
+    apellidos: b.apellidos ?? "",
+    cargo: b.cargo ?? b.puesto ?? "",
+    empresa: cli.empresa || cli.nombre,
+    email: b.email ?? "",
+    tel_fijo: b.telFijo ?? b.tel_fijo ?? "",
+    tel_movil: b.telMovil ?? b.tel_movil ?? "",
+    tel_empresa: b.telEmpresa ?? b.tel_empresa ?? "",
+    extension: b.extension ?? "",
+    tipo,
+    puesto: b.puesto ?? b.cargo ?? "",
+  };
+  db.prepare(
+    "INSERT INTO contactos (id,cliente_id,nombre,apellidos,cargo,empresa,email,tel_fijo,tel_movil,tel_empresa,extension,tipo,puesto) VALUES (@id,@cliente_id,@nombre,@apellidos,@cargo,@empresa,@email,@tel_fijo,@tel_movil,@tel_empresa,@extension,@tipo,@puesto)",
+  ).run(row);
+  res.status(201).json(contactoDe(row.id));
+});
+
+app.put("/api/contactos/:id", (req, res) => {
+  const cur = db.prepare("SELECT * FROM contactos WHERE id=?").get(req.params.id);
+  if (!cur) return res.status(404).json({ error: "contacto no encontrado" });
+  const b = req.body ?? {};
+  if (b.tipo !== undefined && !TIPOS_CONTACTO.includes(b.tipo)) return res.status(400).json({ error: "tipo inválido" });
+  db.prepare(
+    "UPDATE contactos SET nombre=@nombre, apellidos=@apellidos, cargo=@cargo, email=@email, tel_fijo=@tel_fijo, tel_movil=@tel_movil, tel_empresa=@tel_empresa, extension=@extension, tipo=@tipo, puesto=@puesto WHERE id=@id",
+  ).run({
+    nombre: b.nombre ?? cur.nombre,
+    apellidos: b.apellidos ?? cur.apellidos,
+    cargo: b.cargo ?? b.puesto ?? cur.cargo,
+    email: b.email ?? cur.email,
+    tel_fijo: pick(b, "telFijo", "tel_fijo", cur.tel_fijo),
+    tel_movil: pick(b, "telMovil", "tel_movil", cur.tel_movil),
+    tel_empresa: pick(b, "telEmpresa", "tel_empresa", cur.tel_empresa),
+    extension: b.extension ?? cur.extension,
+    tipo: b.tipo ?? cur.tipo,
+    puesto: b.puesto ?? b.cargo ?? cur.puesto,
+    id: req.params.id,
+  });
+  res.json(contactoDe(req.params.id));
+});
+
+app.delete("/api/contactos/:id", (req, res) => {
+  db.prepare("DELETE FROM contactos WHERE id=?").run(req.params.id);
   res.status(204).end();
 });
 

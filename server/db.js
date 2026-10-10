@@ -112,9 +112,19 @@ CREATE TABLE IF NOT EXISTS coberturas (
 `);
 
 // ---------- migración: cobertura y fechas en clientes ----------
-for (const col of ["cobertura_id TEXT REFERENCES coberturas(id)", "fecha_alta TEXT", "fecha_baja TEXT", "ultimo_contacto TEXT"]) {
+for (const col of ["cobertura_id TEXT REFERENCES coberturas(id)", "fecha_alta TEXT", "fecha_baja TEXT", "ultimo_contacto TEXT", "razon_social TEXT DEFAULT ''"]) {
   try {
     db.exec(`ALTER TABLE clientes ADD COLUMN ${col}`);
+  } catch {
+    /* la columna ya existe */
+  }
+}
+
+// ---------- migración: contactos como personas vinculadas al cliente ----------
+// El cliente es la empresa (nombre comercial + razón social); los contactos son personas.
+for (const col of ["cliente_id TEXT", "apellidos TEXT DEFAULT ''", "tel_fijo TEXT DEFAULT ''", "tel_movil TEXT DEFAULT ''", "tel_empresa TEXT DEFAULT ''", "extension TEXT DEFAULT ''", "tipo TEXT DEFAULT 'Sin definir'", "puesto TEXT DEFAULT ''"]) {
+  try {
+    db.exec(`ALTER TABLE contactos ADD COLUMN ${col}`);
   } catch {
     /* la columna ya existe */
   }
@@ -467,9 +477,35 @@ function seedAccionesModelo() {
   }
 }
 
+// ---------- seed contactos: razón social + vincular legados al cliente ----------
+// Idempotente: solo rellena vacíos.
+function seedContactosModelo() {
+  db.prepare("UPDATE clientes SET razon_social=empresa WHERE (razon_social IS NULL OR razon_social='')").run();
+  const vincular = db.prepare(
+    "UPDATE contactos SET cliente_id=?, nombre=?, apellidos=?, puesto=? WHERE id=? AND (cliente_id IS NULL OR cliente_id='')",
+  );
+  const tx = db.transaction(() => {
+    vincular.run("c-3", "Marta", "Vidal", "Directora de Compras", "ct-1"); // TechSolutions
+    vincular.run("c-09", "Javier", "Roca", "CEO", "ct-2"); // NovaDigital
+    vincular.run("c-10", "Elena", "Sanz", "CFO", "ct-3"); // GreenEnergy
+  });
+  tx();
+  // parte nombre/apellidos de los legados que aún los tengan juntos
+  const juntos = db.prepare("SELECT id, nombre FROM contactos WHERE (apellidos IS NULL OR apellidos='') AND nombre LIKE '% %'").all();
+  const partir = db.prepare("UPDATE contactos SET nombre=?, apellidos=? WHERE id=?");
+  const tx2 = db.transaction(() =>
+    juntos.forEach((r) => {
+      const [nom, ...rest] = r.nombre.split(" ");
+      if (rest.length > 0) partir.run(nom, rest.join(" "), r.id);
+    }),
+  );
+  tx2();
+}
+
 seedCoberturas();
 backfillCoberturaDemo();
 seedOfertasModelo();
 seedAccionesModelo();
+seedContactosModelo();
 
 export { DB_PATH };

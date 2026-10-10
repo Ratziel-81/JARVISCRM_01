@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, FilePlus2, Gem, Pencil, PhoneCall, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, FilePlus2, Gem, Pencil, PhoneCall, Plus, X } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import AvatarTile from "../components/common/AvatarTile";
@@ -6,14 +6,17 @@ import {
   ESTADO_CLIENTE_STYLES,
   ESTADO_OFERTA_STYLES,
   ESTADO_OPORTUNIDAD_STYLES,
+  TIPOS_CONTACTO,
   formatEur,
   type Accion,
   type Cliente,
   type Cobertura,
+  type Contacto,
   type EstadoCliente,
   type Oferta,
   type Oportunidad,
   type TipoAccion,
+  type TipoContacto,
 } from "../data/mockData";
 import { api } from "../lib/api";
 import { CARA_STYLE, estadoCobertura, fmtFecha, type Cara } from "../lib/cobertura";
@@ -45,30 +48,36 @@ export default function FichaClientePage() {
   const [ofertas, setOfertas] = useState<Oferta[]>([]);
   const [acciones, setAcciones] = useState<Accion[]>([]);
   const [coberturas, setCoberturas] = useState<Cobertura[]>([]);
+  const [contactos, setContactos] = useState<Contacto[]>([]);
   const [cargando, setCargando] = useState(true);
   const [noExiste, setNoExiste] = useState(false);
-  const [modal, setModal] = useState<null | "editar" | "oportunidad" | "oferta" | "accion">(null);
+  const [modal, setModal] = useState<null | "editar" | "oportunidad" | "oferta" | "accion" | "contacto">(null);
   const [confirmandoBorrar, setConfirmandoBorrar] = useState(false);
+  const [confirmandoBorrarContacto, setConfirmandoBorrarContacto] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [formOp, setFormOp] = useState({ empresa: "", importe: "", prioridad: "Media", probabilidad: "20" });
   const [formOf, setFormOf] = useState({ oportunidadId: "", titulo: "", importe: "", fechaVencimiento: "" });
   const [formAc, setFormAc] = useState({ tipo: "llamada" as TipoAccion, titulo: "", fecha: hoyInput(), hora: "", detalle: "" });
-  const [formCl, setFormCl] = useState({ nombre: "", empresa: "", email: "", telefono: "", estado: "Prospecto" as EstadoCliente, valor: "", coberturaId: "", fechaAlta: "", fechaBaja: "" });
+  const [formCl, setFormCl] = useState({ nombre: "", empresa: "", razonSocial: "", email: "", telefono: "", estado: "Prospecto" as EstadoCliente, valor: "", coberturaId: "", fechaAlta: "", fechaBaja: "" });
+  const [editandoContactoId, setEditandoContactoId] = useState<string | null>(null);
+  const [formCt, setFormCt] = useState({ nombre: "", apellidos: "", email: "", telFijo: "", telMovil: "", telEmpresa: "", extension: "", tipo: "Sin definir" as TipoContacto, puesto: "" });
 
   async function recargar() {
     if (!id) return;
-    const [c, o, of, a, cob] = await Promise.all([
+    const [c, o, of, a, cob, cts] = await Promise.all([
       api.cliente(id),
       api.oportunidades(),
       api.ofertas(),
       api.acciones(),
       api.coberturas(),
+      api.contactosDe(id),
     ]);
     setCliente(c);
     setOps(o);
     setOfertas(of);
     setAcciones(a);
     setCoberturas(cob);
+    setContactos(cts);
   }
 
   useEffect(() => {
@@ -117,6 +126,7 @@ export default function FichaClientePage() {
     setFormCl({
       nombre: cliente.nombre,
       empresa: cliente.empresa ?? "",
+      razonSocial: cliente.razonSocial ?? "",
       email: cliente.email ?? "",
       telefono: cliente.telefono ?? "",
       estado: cliente.estado,
@@ -159,6 +169,63 @@ export default function FichaClientePage() {
     } catch {
       alert("No se pudo eliminar el cliente.");
       setGuardando(false);
+    }
+  }
+
+  function abrirContacto(ct?: Contacto) {
+    if (ct) {
+      setEditandoContactoId(ct.id);
+      setFormCt({
+        nombre: ct.nombre ?? "",
+        apellidos: ct.apellidos ?? "",
+        email: ct.email ?? "",
+        telFijo: ct.telFijo ?? "",
+        telMovil: ct.telMovil ?? "",
+        telEmpresa: ct.telEmpresa ?? "",
+        extension: ct.extension ?? "",
+        tipo: (ct.tipo ?? "Sin definir") as TipoContacto,
+        puesto: ct.puesto ?? ct.cargo ?? "",
+      });
+    } else {
+      setEditandoContactoId(null);
+      setFormCt({ nombre: "", apellidos: "", email: "", telFijo: "", telMovil: "", telEmpresa: "", extension: "", tipo: "Sin definir", puesto: "" });
+    }
+    setConfirmandoBorrarContacto(false);
+    setModal("contacto");
+  }
+
+  async function guardarContacto(e: FormEvent) {
+    e.preventDefault();
+    if (!id || guardando || !formCt.nombre.trim()) return;
+    setGuardando(true);
+    try {
+      if (editandoContactoId) {
+        await api.editarContacto(editandoContactoId, formCt);
+      } else {
+        await api.crearContacto(id, formCt);
+      }
+      await recargar();
+      setModal(null);
+    } catch {
+      alert("No se pudo guardar el contacto.");
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  async function borrarContacto() {
+    if (!editandoContactoId || guardando) return;
+    setGuardando(true);
+    try {
+      const res = await api.borrarContacto(editandoContactoId);
+      if (!res.ok) throw new Error();
+      await recargar();
+      setModal(null);
+    } catch {
+      alert("No se pudo eliminar el contacto.");
+    } finally {
+      setGuardando(false);
+      setConfirmandoBorrarContacto(false);
     }
   }
 
@@ -256,7 +323,10 @@ export default function FichaClientePage() {
         <AvatarTile color={cliente.avatarColor} iniciales={cliente.iniciales} size="lg" />
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-2xl font-extrabold text-white">{cliente.nombre}</h1>
-          <p className="truncate text-sm text-slate-400">{cliente.empresa}</p>
+          <p className="truncate text-sm text-slate-400">
+            {cliente.empresa}
+            {cliente.razonSocial && cliente.razonSocial !== cliente.empresa ? ` · ${cliente.razonSocial}` : ""}
+          </p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {cliente.fechaBaja ? (
               <span className="rounded-full border border-slate-500/30 bg-slate-500/10 px-2 py-0.5 text-[10px] font-semibold text-slate-400">Baja</span>
@@ -294,6 +364,58 @@ export default function FichaClientePage() {
           </div>
         ))}
       </div>
+
+      {/* contactos */}
+      <section className="jarvis-panel p-5">
+        <div className="flex items-center justify-between">
+          <h2 className="section-title">Contactos · {contactos.length}</h2>
+          <button
+            onClick={() => abrirContacto()}
+            className="flex items-center gap-1.5 rounded-xl border border-cyan-300/40 bg-cyan-300/10 px-3 py-1.5 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-300/20"
+          >
+            <Plus size={13} /> Nuevo contacto
+          </button>
+        </div>
+        {contactos.length === 0 ? (
+          <p className="mt-3 rounded-xl border border-dashed border-white/10 p-4 text-center text-xs text-slate-500">
+            Sin contactos. Añade a las personas de este cliente.
+          </p>
+        ) : (
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
+            {contactos.map((ct) => {
+              const tels = [
+                ct.telMovil ? `Móvil ${ct.telMovil}` : "",
+                ct.telEmpresa ? `Empresa ${ct.telEmpresa}${ct.extension ? ` ext. ${ct.extension}` : ""}` : "",
+                ct.telFijo ? `Fijo ${ct.telFijo}` : "",
+              ].filter(Boolean);
+              return (
+                <article key={ct.id} className="jarvis-panel jarvis-panel-hover p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <button onClick={() => abrirContacto(ct)} title="Editar contacto" className="min-w-0 flex-1 text-left">
+                      <p className="truncate text-sm font-bold text-cyan-100 hover:text-white">
+                        {ct.nombre}{ct.apellidos ? ` ${ct.apellidos}` : ""}
+                      </p>
+                    </button>
+                    {ct.tipo && ct.tipo !== "Sin definir" && (
+                      <span className="shrink-0 rounded-full border border-cyan-300/30 bg-cyan-300/10 px-2 py-0.5 text-[10px] font-semibold text-cyan-200">
+                        {ct.tipo}
+                      </span>
+                    )}
+                  </div>
+                  {(ct.puesto || ct.cargo) && <p className="mt-0.5 truncate text-xs text-slate-400">{ct.puesto || ct.cargo}</p>}
+                  <div className="mt-2 space-y-1 text-xs">
+                    {ct.email ? <p className="truncate text-slate-400">{ct.email}</p> : null}
+                    {tels.map((t) => (
+                      <p key={t} className="truncate font-mono text-[11px] text-slate-500">{t}</p>
+                    ))}
+                    {tels.length === 0 && !ct.email && <p className="text-[11px] text-slate-600">Sin datos de contacto.</p>}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
 
       <div className="grid grid-cols-1 gap-4 2xl:grid-cols-2">
         {/* oportunidades */}
@@ -399,7 +521,7 @@ export default function FichaClientePage() {
           { t: "Contacto", v: `${cliente.email || "—"} · ${cliente.telefono || "—"}` },
           { t: "Alta / Baja", v: `${fmtFecha(cliente.fechaAlta)}${cliente.fechaBaja ? ` → ${fmtFecha(cliente.fechaBaja)}` : ""}` },
           { t: "Cobertura", v: cliente.coberturaNombre ?? (cliente.coberturaId ? `Tipo ${cliente.coberturaId}` : "Sin cobertura") },
-          { t: "Registrado", v: cliente.hace || "—" },
+          { t: "Razón social", v: cliente.razonSocial || "—" },
         ].map((f) => (
           <div key={f.t}>
             <p className="section-title">{f.t}</p>
@@ -418,7 +540,7 @@ export default function FichaClientePage() {
               </div>
               <div>
                 <h2 className="text-lg font-extrabold text-white">¿Seguro que quieres eliminar a {cliente.nombre}?</h2>
-                <p className="mt-1 text-sm text-slate-400">Se borrará el cliente y se desvincularán sus acciones. Esta acción no se puede deshacer.</p>
+                <p className="mt-1 text-sm text-slate-400">Se borrará el cliente con sus contactos y se desvincularán sus acciones. Esta acción no se puede deshacer.</p>
               </div>
               <div className="flex gap-2">
                 <button
@@ -445,8 +567,9 @@ export default function FichaClientePage() {
             </div>
             {(
               [
-                { k: "nombre", label: "Nombre *", ph: "" },
+                { k: "nombre", label: "Nombre comercial *", ph: "" },
                 { k: "empresa", label: "Empresa", ph: "" },
+                { k: "razonSocial", label: "Razón social", ph: "" },
                 { k: "email", label: "Email", ph: "" },
                 { k: "telefono", label: "Teléfono", ph: "" },
               ] as const
@@ -626,6 +749,107 @@ export default function FichaClientePage() {
               {guardando ? "Guardando…" : "Crear pendiente"}
             </button>
           </form>
+        </div>
+      )}
+
+      {/* modal contacto: crear / editar / borrar */}
+      {modal === "contacto" && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" onClick={() => !guardando && (setModal(null), setConfirmandoBorrarContacto(false))}>
+          {confirmandoBorrarContacto ? (
+            <div onClick={(e) => e.stopPropagation()} className="jarvis-panel w-full max-w-md space-y-4 p-6 text-center" role="alertdialog" aria-label="Confirmar eliminación">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-red-300/40 bg-red-400/10 text-red-300">
+                <X size={22} />
+              </div>
+              <div>
+                <h2 className="text-lg font-extrabold text-white">¿Seguro que quieres eliminar a {formCt.nombre}{formCt.apellidos ? ` ${formCt.apellidos}` : ""}?</h2>
+                <p className="mt-1 text-sm text-slate-400">Se borrará el contacto de este cliente. Esta acción no se puede deshacer.</p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setConfirmandoBorrarContacto(false)}
+                  disabled={guardando}
+                  className="flex-1 rounded-xl border border-white/10 bg-white/[.02] py-2.5 text-sm font-semibold text-slate-300 transition hover:border-cyan-300/40 hover:text-white disabled:opacity-50"
+                >
+                  Atrás
+                </button>
+                <button
+                  onClick={borrarContacto}
+                  disabled={guardando}
+                  className="flex-1 rounded-xl border border-red-400/60 bg-red-500/20 py-2.5 text-sm font-bold tracking-wide text-red-200 transition hover:bg-red-500/30 disabled:opacity-50"
+                >
+                  {guardando ? "Eliminando…" : "Eliminar"}
+                </button>
+              </div>
+            </div>
+          ) : (
+          <form onClick={(e) => e.stopPropagation()} onSubmit={guardarContacto} className="jarvis-panel max-h-[90vh] w-full max-w-md space-y-3 overflow-y-auto p-6">
+            <div className="flex items-center justify-between">
+              <h2 className="section-title">{editandoContactoId ? "Editar contacto" : "Nuevo contacto"}</h2>
+              <button type="button" onClick={() => setModal(null)} aria-label="Cerrar"><X size={17} className="text-slate-500 hover:text-slate-200" /></button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block">
+                <span className="mb-1 block text-xs font-semibold text-slate-400">Nombre *</span>
+                <input value={formCt.nombre} onChange={(e) => setFormCt((f) => ({ ...f, nombre: e.target.value }))} required placeholder="Ej. Marta" className={inputCls} />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-xs font-semibold text-slate-400">Apellidos</span>
+                <input value={formCt.apellidos} onChange={(e) => setFormCt((f) => ({ ...f, apellidos: e.target.value }))} placeholder="Ej. Vidal" className={inputCls} />
+              </label>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block">
+                <span className="mb-1 block text-xs font-semibold text-slate-400">Tipo</span>
+                <select value={formCt.tipo} onChange={(e) => setFormCt((f) => ({ ...f, tipo: e.target.value as TipoContacto }))} className={selectCls}>
+                  {TIPOS_CONTACTO.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-xs font-semibold text-slate-400">Puesto</span>
+                <input value={formCt.puesto} onChange={(e) => setFormCt((f) => ({ ...f, puesto: e.target.value }))} placeholder="Ej. Directora de Compras" className={inputCls} />
+              </label>
+            </div>
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold text-slate-400">Email</span>
+              <input type="email" value={formCt.email} onChange={(e) => setFormCt((f) => ({ ...f, email: e.target.value }))} placeholder="nombre@empresa.es" className={inputCls} />
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block">
+                <span className="mb-1 block text-xs font-semibold text-slate-400">Móvil</span>
+                <input value={formCt.telMovil} onChange={(e) => setFormCt((f) => ({ ...f, telMovil: e.target.value }))} placeholder="+34 600 000 000" className={inputCls} />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-xs font-semibold text-slate-400">Fijo</span>
+                <input value={formCt.telFijo} onChange={(e) => setFormCt((f) => ({ ...f, telFijo: e.target.value }))} placeholder="+34 910 000 000" className={inputCls} />
+              </label>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block">
+                <span className="mb-1 block text-xs font-semibold text-slate-400">Tel. empresa</span>
+                <input value={formCt.telEmpresa} onChange={(e) => setFormCt((f) => ({ ...f, telEmpresa: e.target.value }))} placeholder="+34 910 000 000" className={inputCls} />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-xs font-semibold text-slate-400">Extensión</span>
+                <input value={formCt.extension} onChange={(e) => setFormCt((f) => ({ ...f, extension: e.target.value }))} placeholder="123" className={inputCls} />
+              </label>
+            </div>
+            <button type="submit" disabled={guardando} className="w-full rounded-xl border border-cyan-300/40 bg-cyan-300/10 py-2.5 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-300/20 disabled:opacity-50">
+              {guardando ? "Guardando…" : editandoContactoId ? "Guardar" : "Crear contacto"}
+            </button>
+            {editandoContactoId && (
+              <button
+                type="button"
+                onClick={() => setConfirmandoBorrarContacto(true)}
+                disabled={guardando}
+                className="w-full rounded-xl border border-red-300/20 py-2.5 text-sm font-semibold text-red-300/80 transition hover:border-red-300/50 hover:text-red-200 disabled:opacity-50"
+              >
+                Eliminar contacto
+              </button>
+            )}
+          </form>
+          )}
         </div>
       )}
     </div>

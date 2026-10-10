@@ -113,6 +113,7 @@ export default function ClientesPage() {
   const [form, setForm] = useState({
     nombre: "",
     empresa: "",
+    razonSocial: "",
     email: "",
     telefono: "",
     estado: "Prospecto" as EstadoCliente,
@@ -190,7 +191,7 @@ export default function ClientesPage() {
       if (!res.ok) throw new Error();
       const nuevo = (await res.json()) as Cliente;
       setClientes((prev) => [nuevo, ...prev]);
-      setForm({ nombre: "", empresa: "", email: "", telefono: "", estado: "Prospecto", valor: "", coberturaId: "", fechaAlta: hoyInput(), fechaBaja: "" });
+      setForm({ nombre: "", empresa: "", razonSocial: "", email: "", telefono: "", estado: "Prospecto", valor: "", coberturaId: "", fechaAlta: hoyInput(), fechaBaja: "" });
       setModal(false);
     } catch {
       alert("No se pudo guardar. Arranca la API con `npm run server`.");
@@ -437,6 +438,7 @@ export default function ClientesPage() {
               [
                 { k: "nombre", label: "Nombre *", ph: "Ej. Hospital San Jorge" },
                 { k: "empresa", label: "Empresa", ph: "Ej. San Jorge Group" },
+                { k: "razonSocial", label: "Razón social", ph: "Ej. San Jorge Group S.L." },
                 { k: "email", label: "Email", ph: "contacto@empresa.es" },
                 { k: "telefono", label: "Teléfono", ph: "+34 910 000 000" },
               ] as const

@@ -18,6 +18,18 @@ export const api = {
   clientes: () => req<import("../data/mockData").Cliente[]>("/api/clientes"),
   cliente: (id: string) => req<import("../data/mockData").Cliente>(`/api/clientes/${id}`),
   borrarCliente: (id: string) => fetch(`/api/clientes/${id}`, { method: "DELETE" }),
+  contactosDe: (clienteId: string) => req<import("../data/mockData").Contacto[]>(`/api/clientes/${clienteId}/contactos`),
+  crearContacto: (clienteId: string, body: Record<string, unknown>) =>
+    req<import("../data/mockData").Contacto>(`/api/clientes/${clienteId}/contactos`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  editarContacto: (id: string, body: Record<string, unknown>) =>
+    req<import("../data/mockData").Contacto>(`/api/contactos/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
+  borrarContacto: (id: string) => fetch(`/api/contactos/${id}`, { method: "DELETE" }),
   coberturas: () => req<import("../data/mockData").Cobertura[]>("/api/coberturas"),
   empresas: () => req<import("../data/mockData").Empresa[]>("/api/empresas"),
   contactos: () => req<import("../data/mockData").Contacto[]>("/api/contactos"),
