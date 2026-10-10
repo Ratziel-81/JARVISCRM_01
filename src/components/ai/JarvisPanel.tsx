@@ -51,6 +51,12 @@ function sinVocativo(texto: string): string {
     .trim();
 }
 
+// Parada forzosa: oír el nombre + orden de parada incluso mientras habla.
+// (Sin nombre se ignora al hablar: sería el eco del propio altavoz.)
+function oyeParadaForzosa(texto: string): boolean {
+  return /jarvis/i.test(texto) && ORDEN_PARAR.test(sinVocativo(texto));
+}
+
 function extraerNavegacion(texto: string): { ruta: string; nombre: string; puro: boolean } | null {
   const t = texto.toLowerCase();
   if (!VERBO_NAV.test(t)) return null;
@@ -110,6 +116,8 @@ const PREGUNTAS: Record<string, string> = {
   kpis: "Dame los KPIs clave del negocio",
 };
 
+const ARRANQUE_MS = Date.now();
+
 let nextId = 1;
 
 export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
@@ -128,9 +136,15 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
   const despiertoRef = useRef(false);
   const comandoRef = useRef("");
   const silencioRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reiniciosRef = useRef<number[]>([]);
+  const actividadRef = useRef(ARRANQUE_MS);
   const abortRef = useRef<AbortController | null>(null);
   const hablandoRef = useRef(false);
   const [hablando, setHablando] = useState(false);
+  // gracia post-voz: el micro sigue sordo 1,2 s tras callar (cola del altavoz)
+  const graciaHastaRef = useRef(0);
+  // comando en espera cuando la IA está ocupada
+  const pendienteRef = useRef("");
   // espejos para callbacks estables (efectos y reconocimiento)
   const mensajesRef = useRef<Mensaje[]>([SALUDO]);
   const pensandoRef = useRef(false);
@@ -141,7 +155,8 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
     setMensajes(mensajesRef.current);
   }, []);
 
-  // Decir en voz alta con seguimiento de estado (para el botón Parar y el anti-bucle)
+  // Decir en voz alta con seguimiento de estado (para el botón Parar y el anti-bucle).
+  // Marca "hablando" de forma SÍNCRONA para no dejar ventana de carrera al micro.
   const decir = useCallback(
     (texto: string) => {
       if (!vozAltaRef.current) return;
@@ -149,18 +164,21 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
         const synth = window.speechSynthesis;
         if (!synth) return;
         synth.cancel();
+        hablandoRef.current = true;
+        setHablando(true);
         const u = new SpeechSynthesisUtterance(textoParaVoz(texto));
         u.lang = "es-ES";
         const vozEs = synth.getVoices().find((v) => v.lang?.toLowerCase().startsWith("es"));
         if (vozEs) u.voice = vozEs;
         u.rate = 1.05;
-        u.onstart = () => {
-          hablandoRef.current = true;
-          setHablando(true);
-        };
         const fin = () => {
           hablandoRef.current = false;
           setHablando(false);
+          graciaHastaRef.current = Date.now() + 1200;
+        };
+        u.onstart = () => {
+          hablandoRef.current = true;
+          setHablando(true);
         };
         u.onend = fin;
         u.onerror = fin;
@@ -171,6 +189,9 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
     },
     [],
   );
+
+  // ¿Debe el micro ignorar lo que oye? Sí mientras habla o en el periodo de gracia.
+  // EXCEPCIÓN: "JARVIS, para" con nombre explícito siempre se atiende.
 
   // Parar todo: calla la voz, aborta la petición en curso y limpia el comando
   const pararTodo = useCallback(() => {
@@ -184,6 +205,7 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
     abortRef.current?.abort();
     abortRef.current = null;
     comandoRef.current = "";
+    pendienteRef.current = "";
     despiertoRef.current = false;
     setDespierto(false);
   }, []);
@@ -197,10 +219,18 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
 
   const navigate = useNavigate();
 
+  // eslint-disable-next-line react/preserve-manual-memoization -- se llama a sí misma para vaciar la cola; la memoización no es crítica aquí
   const enviar = useCallback(
     async (texto: string) => {
       const pregunta = texto.trim();
-      if (!pregunta || pensandoRef.current) return;
+      if (!pregunta) return;
+      // Ocupado: se encola y se atiende al terminar (antes se tragaba en silencio)
+      if (pensandoRef.current) {
+        pendienteRef.current = pregunta;
+        setInput("");
+        decir("Un momento, termino esto y voy contigo.");
+        return;
+      }
       // PARAR tiene prioridad absoluta: no va a la IA en ningún modo
       if (ORDEN_PARAR.test(sinVocativo(pregunta))) {
         agregarMensaje({ id: nextId++, de: "user", texto: pregunta });
@@ -264,6 +294,7 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
       } catch (e) {
         if (e instanceof DOMException && e.name === "AbortError") {
           agregarMensaje({ id: nextId++, de: "jarvis", texto: "⏹ Detenido.", meta: "parado por ti" });
+          pendienteRef.current = "";
         } else {
           // sin API o fallo interno: se muestra el motivo real + fallback local
           const motivo = e instanceof Error ? e.message : "error desconocido";
@@ -276,6 +307,10 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
         if (abortRef.current === ctrl) abortRef.current = null;
         pensandoRef.current = false;
         setPensando(false);
+        // atiende lo encolado mientras estaba ocupado
+        const siguiente = pendienteRef.current;
+        pendienteRef.current = "";
+        if (siguiente) enviar(siguiente);
       }
     },
     [agregarMensaje, decir, navigate, forzado, pararTodo],
@@ -286,12 +321,17 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
     enviar(input);
   }
 
-  // Dictado por micro: transcribe y lo envía solo al chat
+  // Dictado por micro: aborta lo que haya en curso y transcribe lo nuevo
   function alternarMicro() {
     if (escuchando) {
       recogRef.current?.stop();
       return;
     }
+    // interrumpir también cancela la petición (si no, lo dictado se traga en silencio)
+    abortRef.current?.abort();
+    abortRef.current = null;
+    pensandoRef.current = false;
+    setPensando(false);
     try {
       window.speechSynthesis?.cancel();
     } catch {
@@ -361,6 +401,14 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
     };
 
     const arrancar = () => {
+      // freno: 3 reintentos en 10 s = micro roto -> apagar con aviso
+      const ahora = Date.now();
+      reiniciosRef.current = [...reiniciosRef.current.filter((t) => ahora - t < 10000), ahora];
+      if (reiniciosRef.current.length >= 3) {
+        setManosLibres(false);
+        agregarMensaje({ id: nextId++, de: "jarvis", texto: "El micro se corta solo: he apagado manos libres. Vuelve a darle a la oreja.", meta: "micro inestable" });
+        return;
+      }
       let SR: new () => Reconocedor;
       try {
         SR = reconocerVoz();
@@ -375,16 +423,21 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
       rec.interimResults = true;
       rec.maxAlternatives = 1;
       recogRef.current = rec;
+      actividadRef.current = Date.now();
       rec.onresult = (e) => {
-        // anti-bucle: mientras habla, el micro oye al altavoz → se ignora
-        // EXCEPTO la orden de parada, que siempre se atiende
-        if (hablandoRef.current) {
-          let texto = "";
-          for (const r of Array.from(e.results ?? [])) texto += `${r?.[0]?.transcript ?? ""} `;
-          if (ORDEN_PARAR.test(texto.replace(/jarvis/gi, "").trim())) pararTodo();
+        actividadRef.current = Date.now();
+        let texto = "";
+        for (const r of Array.from(e.results ?? [])) texto += `${r?.[0]?.transcript ?? ""} `;
+        // Sordo mientras habla o en periodo de gracia (eco del altavoz),
+        // EXCEPTO "JARVIS, para" con nombre explícito, que siempre se atiende
+        if (hablandoRef.current || Date.now() < graciaHastaRef.current) {
+          if (oyeParadaForzosa(texto)) {
+            agregarMensaje({ id: nextId++, de: "user", texto: "Jarvis, para" });
+            pararTodo();
+            agregarMensaje({ id: nextId++, de: "jarvis", texto: "⏹ Detenido.", meta: "orden por voz" });
+          }
           return;
         }
-        let texto = "";
         for (const r of Array.from(e.results ?? [])) texto += `${r?.[0]?.transcript ?? ""} `;
         if (!despiertoRef.current) {
           if (/jarvis/i.test(texto)) {
@@ -416,7 +469,26 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
     };
 
     arrancar();
+    // watchdog: si la escucha muere en silencio (el navegador la corta sin
+    // onend), reengancha cada 45 s siempre que no esté a mitad de algo
+    const vigilante = setInterval(() => {
+      if (
+        manosLibresRef.current &&
+        !despiertoRef.current &&
+        !pensandoRef.current &&
+        !hablandoRef.current &&
+        Date.now() >= graciaHastaRef.current &&
+        Date.now() - actividadRef.current > 60000
+      ) {
+        try {
+          recogRef.current?.stop(); // el onend reengancha
+        } catch {
+          /* ya parado */
+        }
+      }
+    }, 45000);
     return () => {
+      clearInterval(vigilante);
       manosLibresRef.current = false;
       parar();
     };
