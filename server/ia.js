@@ -273,7 +273,8 @@ const TOOLS = [
   { type: "function", function: { name: "resolver_fecha", description: "Convierte una fecha en palabras (hoy, mañana, el jueves, el 15 de octubre) a YYYY-MM-DD. Úsala SIEMPRE para fechas relativas: no calcules días a mano.", parameters: { type: "object", properties: { texto: { type: "string", description: "la fecha tal como la dijo el usuario" } } } } },
   { type: "function", function: { name: "crear_cliente", description: "Crea un cliente. SOLO el nombre es obligatorio: crea con lo que tengas (empresa si la sabes) y no pidas email, teléfono ni valor.", parameters: { type: "object", properties: { nombre: { type: "string" }, empresa: { type: "string" }, email: { type: "string" }, telefono: { type: "string" }, estado: { type: "string", description: "Activo, Prospecto o En seguimiento" }, valor: { type: "number" } }, required: ["nombre"] } } },
   { type: "function", function: { name: "crear_accion", description: "Crea una llamada, reunión, visita o tarea con fecha y hora. Si falta la hora, PREGUNTA antes de crear (no la inventes).", parameters: { type: "object", properties: { tipo: { type: "string", description: "llamada, reunion, visita o tarea" }, titulo: { type: "string" }, empresa: { type: "string" }, fecha: { type: "string", description: "YYYY-MM-DD (usa resolver_fecha)" }, hora: { type: "string", description: "HH:MM, solo si el usuario la dijo" }, detalle: { type: "string" } }, required: ["tipo", "fecha"] } } },
-  { type: "function", function: { name: "ir_a", description: "Lleva al usuario a una parte de la app. Úsala cuando pida abrir, ver o ir a un módulo.", parameters: { type: "object", properties: { ruta: { type: "string", description: "una de: /, /dashboard, /clientes, /oportunidades, /ofertas, /acciones, /calendario, /tareas, /kpis, /informes, /configuracion" } }, required: ["ruta"] } } },
+  { type: "function", function: { name: "ir_a", description: "Lleva al usuario a una parte de la app. Úsala cuando pida abrir, ver o ir a un módulo. Para la pantalla de crear cliente usa /clientes?nuevo=1.", parameters: { type: "object", properties: { ruta: { type: "string", description: "una de: /, /dashboard, /clientes, /clientes?nuevo=1, /oportunidades, /ofertas, /acciones, /calendario, /tareas, /kpis, /informes, /configuracion" } }, required: ["ruta"] } } },
+  { type: "function", function: { name: "abrir_cliente", description: "Abre la ficha de un cliente por su nombre o empresa. Si hay varios candidatos, pregunta cuál.", parameters: { type: "object", properties: { q: { type: "string", description: "nombre o empresa a buscar" } }, required: ["q"] } } },
 ];
 
 async function ejecutarHerramienta(name, args = {}) {
@@ -352,9 +353,15 @@ async function ejecutarHerramienta(name, args = {}) {
       return { creado: true, id: row.id, titulo: row.titulo, tipo, fecha: row.fecha, hora: row.hora || "sin hora" };
     }
     case "ir_a": {
-      const RUTAS = ["/", "/dashboard", "/clientes", "/oportunidades", "/ofertas", "/acciones", "/calendario", "/tareas", "/kpis", "/informes", "/configuracion"];
+      const RUTAS = ["/", "/dashboard", "/clientes", "/clientes?nuevo=1", "/oportunidades", "/ofertas", "/acciones", "/calendario", "/tareas", "/kpis", "/informes", "/configuracion"];
       if (!RUTAS.includes(args.ruta)) return { error: `ruta inválida (usa: ${RUTAS.join(", ")})` };
       return { navegar: args.ruta };
+    }
+    case "abrir_cliente": {
+      const cands = buscarCliente(args.q ?? "");
+      if (cands.length === 0) return { error: `no encuentro ningún cliente "${args.q}"` };
+      if (cands.length === 1) return { navegar: `/clientes/${cands[0].id}`, cliente: cands[0].nombre };
+      return { candidatos: cands.map((c) => ({ id: c.id, nombre: c.nombre, empresa: c.empresa })), indica: "hay varios candidatos: pregunta al usuario cuál quiere abrir" };
     }
     default:
       return { error: `herramienta desconocida: ${name}` };
@@ -448,6 +455,8 @@ También puedes CREAR cosas: crear_cliente (pide el nombre si falta) y crear_acc
 AUTONOMÍA (obligatorio): cuando el usuario te cuente que ha quedado en algo futuro ("hemos quedado en reunirnos el jueves", "llámale mañana", "hay que enviarle la oferta"), REGÍSTRALO con crear_accion en ese mismo turno: primero resolver_fecha, luego crear_accion. PROHIBIDO limitarte a recomendar registrarlo: si tienes datos suficientes, créalo. Si falta la hora, NO crees nada todavía: pregunta solo la hora y crea en el turno siguiente con todo el contexto. Si falta el nombre del cliente para crear_cliente, pregunta solo el nombre. Después de crear algo, informa de lo creado con sus datos.
 Para fechas en palabras usa SIEMPRE resolver_fecha (hoy es ${hoyISO()}); para horas usa HH:MM de 24h tal como las diga el usuario. Después de crear algo, informa de lo creado con sus datos.
 Si el usuario pide abrir, ver o ir a un módulo, usa ir_a con la ruta.
+Para abrir la ficha de un cliente concreto usa abrir_cliente con su nombre;
+para la pantalla de crear cliente usa ir_a con /clientes?nuevo=1.
 También puedes buscar información externa en internet (buscar_web) y leer páginas concretas (leer_web): úsalo para datos que no estén en la base de datos (tipos, noticias, definiciones) y cita la fuente.
 REGLA: si el usuario pide explícitamente buscar en internet, leer una página o datos actuales/externos, USA OBLIGATORIAMENTE buscar_web o leer_web antes de responder. No respondas de memoria cuando te pidan consultar la web.
 Hoy es ${hoyISO()}. Responde en español, estructurado con titulares y bullets, máximo 250 palabras.`;

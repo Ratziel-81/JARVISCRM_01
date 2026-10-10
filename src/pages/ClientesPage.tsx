@@ -1,6 +1,6 @@
 import { Frown, LayoutGrid, List, Mail, Meh, Minus, Phone, PhoneCall, Plus, Rows3, Search, Smile, UserX, X } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ESTADO_CLIENTE_STYLES,
   clientesRecientes,
@@ -96,7 +96,13 @@ export default function ClientesPage() {
   const [orden, setOrden] = useState<Orden>("recientes");
   const [vista, setVista] = useState<Vista>("lista");
   const navigate = useNavigate();
-  const [modal, setModal] = useState(false);
+  const [params, setParams] = useSearchParams();
+  const [modal, setModal] = useState(() => params.get("nuevo") === "1");
+
+  // ?nuevo=1 abre el alta (lo usa JARVIS por voz); se limpia de la URL
+  useEffect(() => {
+    if (params.get("nuevo") === "1") setParams({}, { replace: true });
+  }, [params, setParams]);
 
   function irAFicha(e: React.KeyboardEvent | React.MouseEvent, id: string) {
     if ("key" in e && e.key !== "Enter" && e.key !== " ") return;

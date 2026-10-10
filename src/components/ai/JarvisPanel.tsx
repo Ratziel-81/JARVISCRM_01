@@ -2,6 +2,7 @@ import { Ear, Mic, Moon, Send, Square, Volume2, VolumeX, X } from "lucide-react"
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { respuestasIA } from "../../data/mockData";
+import { api } from "../../lib/api";
 import AICore from "./AICore";
 import QuickActions from "./QuickActions";
 
@@ -21,7 +22,7 @@ function clasificar(pregunta: string): Mente {
   if (/rápido|rapido|\bvoz\b/.test(t)) return "voz"; // forzar: "dímelo por voz"
   if (/cerebro|profund/.test(t)) return "cerebro"; // forzar: "pásalo al cerebro"
   if (t.length > 140) return "cerebro";
-  return /agenda|organiz|planific|analiz|análisis|compara|recomien|ofrec|prioriz|estrateg|detal|\blista\b|vence|desatend|\bkpi\b|informe|semana|trimestre|quién|quiénes|por qué|cuáles/i.test(t)
+  return /agenda|organiz|planific|analiz|análisis|compara|recomien|ofrec|prioriz|estrateg|detal|\blista\b|vence|desatend|\bkpi\b|informe|semana|trimestre|quién|quiénes|por qué|cuáles|crea|crear|nuev[oa]\b|\balta\b|\bañad|registr|ficha/i.test(t)
     ? "cerebro"
     : "voz";
 }
@@ -66,6 +67,36 @@ function extraerNavegacion(texto: string): { ruta: string; nombre: string; puro:
     for (const mm of MODULOS) for (const n of mm.nombres) resto = resto.split(n).join(" ");
     resto = resto.replace(/\s+/g, " ").trim();
     return { ruta: m.ruta, nombre: m.nombre, puro: resto.length <= 2 };
+  }
+  return null;
+}
+
+// Ficha de cliente y alta: necesitan buscar, así que son asíncronas.
+// Devuelve null si no hay intención de navegar a ficha/alta.
+async function resolverFichaOAlta(texto: string): Promise<{ ruta: string; nombre: string; puro: boolean } | null> {
+  const t = texto.toLowerCase().trim();
+  // alta de cliente: sin detalles abre el modal; con detalles lo crea la IA
+  if (/(nuev[oa]|crear|crea|dar de alta|alta|añadir|anadir|registrar)\s+(un\s+|una\s+|el\s+|al\s+)?cliente/i.test(texto)) {
+    let resto = t
+      .replace(/\b(nuev[oa]|crear|crea|dar de alta|alta|añadir|anadir|registrar|quiero|quieres|necesito|voy|vamos|hay que|tengo que|tengo|un|una|el|al|cliente|clientes|por favor)\b/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (resto.length <= 2) return { ruta: "/clientes?nuevo=1", nombre: "alta de cliente", puro: true };
+    return null;
+  }
+  // ficha: "abre la ficha de X", "ficha de X", "muéstrame el cliente X"...
+  const m =
+    t.match(/(?:ficha|detalle|datos)\s+(?:de\s+|del\s+)?(?:cliente\s+)?(.+)/) ??
+    t.match(/(?:abre|abrir|muestra|muéstrame|muestrame|enséñame|ensename|busca|buscar|ver|mira)\s+(?:al\s+|el\s+|la\s+)?cliente\s+(.+)/);
+  if (!m) return null;
+  const q = m[1].replace(/[?¿!¡.,]+$/g, "").trim();
+  if (q.length < 2) return null;
+  try {
+    const hits = await api.search(q);
+    const cli = (Array.isArray(hits) ? hits : []).find((h) => h.tipo === "Cliente");
+    if (cli) return { ruta: `/clientes/${cli.id}`, nombre: cli.titulo, puro: true };
+  } catch {
+    /* sin API: lo intenta la IA */
   }
   return null;
 }
@@ -239,8 +270,9 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
         agregarMensaje({ id: nextId++, de: "jarvis", texto: "⏹ Detenido.", meta: "orden de parada" });
         return;
       }
-      // navegación por voz: si pide ir a un módulo, vamos; si solo era eso, avisamos en local
-      const nav = extraerNavegacion(pregunta);
+      // navegación por voz: ficha/alta de cliente y módulos.
+      // Si solo era eso, navegamos y avisamos en local; si hay más, seguimos a la IA.
+      const nav = (await resolverFichaOAlta(pregunta).catch(() => null)) ?? extraerNavegacion(pregunta);
       if (nav) navigate(nav.ruta);
       const mente: Mente = forzado === "auto" ? clasificar(pregunta) : forzado === "smart" ? "cerebro" : "voz";
       const historial = mensajesRef.current.slice(-8).map((m) => ({ rol: m.de === "user" ? "yo" : "jarvis", texto: m.texto }));
