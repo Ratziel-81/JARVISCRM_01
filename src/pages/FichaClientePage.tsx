@@ -20,6 +20,7 @@ import {
 } from "../data/mockData";
 import { api } from "../lib/api";
 import { CARA_STYLE, estadoCobertura, fmtFecha, type Cara } from "../lib/cobertura";
+import { useFijarContextoIA } from "../lib/contextoIA";
 
 // Vincula por nombre normalizado (sin S.L./S.A., tildes ni signos)
 function norm(s: string | null | undefined): string {
@@ -61,6 +62,7 @@ export default function FichaClientePage() {
   const [formCl, setFormCl] = useState({ nombre: "", empresa: "", razonSocial: "", email: "", telefono: "", estado: "Prospecto" as EstadoCliente, valor: "", coberturaId: "", fechaAlta: "", fechaBaja: "" });
   const [editandoContactoId, setEditandoContactoId] = useState<string | null>(null);
   const [formCt, setFormCt] = useState({ nombre: "", apellidos: "", email: "", telFijo: "", telMovil: "", telEmpresa: "", extension: "", tipo: "Sin definir" as TipoContacto, puesto: "" });
+  useFijarContextoIA("cliente", id, cliente?.nombre);
 
   async function recargar() {
     if (!id) return;

@@ -734,14 +734,14 @@ app.post("/api/ia/dormir", async (_req, res) => {
 });
 
 app.post("/api/ia/chat", async (req, res) => {
-  const { mensaje, historial } = req.body ?? {};
+  const { mensaje, historial, contexto } = req.body ?? {};
   if (!mensaje?.trim()) return res.status(400).json({ error: "mensaje requerido" });
   const ctrl = new AbortController();
   res.on("close", () => {
     if (!res.writableEnded) ctrl.abort(); // cliente parado: liberar GPU
   });
   try {
-    res.json(await voz(mensaje.trim(), Array.isArray(historial) ? historial : [], ctrl.signal));
+    res.json(await voz(mensaje.trim(), Array.isArray(historial) ? historial : [], ctrl.signal, contexto ?? {}));
   } catch (e) {
     if (e?.name === "AbortError") return;
     res.status(502).json({ error: errorIA(e) });
@@ -749,14 +749,14 @@ app.post("/api/ia/chat", async (req, res) => {
 });
 
 app.post("/api/ia/cerebro", async (req, res) => {
-  const { pregunta, historial } = req.body ?? {};
+  const { pregunta, historial, contexto } = req.body ?? {};
   if (!pregunta?.trim()) return res.status(400).json({ error: "pregunta requerida" });
   const ctrl = new AbortController();
   res.on("close", () => {
     if (!res.writableEnded) ctrl.abort(); // cliente parado: liberar GPU
   });
   try {
-    res.json(await cerebro(pregunta.trim(), Array.isArray(historial) ? historial : [], ctrl.signal));
+    res.json(await cerebro(pregunta.trim(), Array.isArray(historial) ? historial : [], ctrl.signal, contexto ?? {}));
   } catch (e) {
     if (e?.name === "AbortError") return;
     res.status(502).json({ error: errorIA(e) });

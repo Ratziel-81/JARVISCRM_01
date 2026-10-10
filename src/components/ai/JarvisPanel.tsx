@@ -1,8 +1,9 @@
 import { Ear, Mic, Moon, Send, Square, Volume2, VolumeX, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { respuestasIA } from "../../data/mockData";
 import { api } from "../../lib/api";
+import { leerContexto } from "../../lib/contextoIA";
 import AICore from "./AICore";
 import QuickActions from "./QuickActions";
 
@@ -22,7 +23,7 @@ function clasificar(pregunta: string): Mente {
   if (/rápido|rapido|\bvoz\b/.test(t)) return "voz"; // forzar: "dímelo por voz"
   if (/cerebro|profund/.test(t)) return "cerebro"; // forzar: "pásalo al cerebro"
   if (t.length > 140) return "cerebro";
-  return /agenda|organiz|planific|analiz|análisis|compara|recomien|ofrec|prioriz|estrateg|detal|\blista\b|vence|desatend|\bkpi\b|informe|semana|trimestre|quién|quiénes|por qué|cuáles|crea|crear|nuev[oa]\b|\balta\b|\bañad|registr|ficha/i.test(t)
+  return /agenda|organiz|planific|analiz|análisis|compara|recomien|ofrec|prioriz|estrateg|detal|\blista\b|vence|desatend|\bkpi\b|informe|semana|trimestre|quién|quiénes|por qué|cuáles|crea|crear|nuev[oa]\b|\balta\b|\bañad|registr|ficha|modifica|modificar|cambia|cambiar|edit|actualiz|borra|borrar|elimina|eliminar|añad|anade|quitar/i.test(t)
     ? "cerebro"
     : "voz";
 }
@@ -249,12 +250,15 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
   useEffect(() => () => window.speechSynthesis?.cancel(), []);
 
   const navigate = useNavigate();
+  const location = useLocation();
 
   // eslint-disable-next-line react/preserve-manual-memoization -- se llama a sí misma para vaciar la cola; la memoización no es crítica aquí
   const enviar = useCallback(
     async (texto: string) => {
       const pregunta = texto.trim();
       if (!pregunta) return;
+      // contexto de pantalla: dónde mira (para presuponer de qué habla)
+      const contexto = leerContexto(`${location.pathname}${location.search}`);
       // Ocupado: se encola y se atiende al terminar (antes se tragaba en silencio)
       if (pensandoRef.current) {
         pendienteRef.current = pregunta;
@@ -304,7 +308,7 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
       try {
         window.speechSynthesis?.cancel();
         if (mente === "cerebro") {
-          const d = await postIA("/api/ia/cerebro", { pregunta, historial });
+          const d = await postIA("/api/ia/cerebro", { pregunta, historial, contexto });
           agregarMensaje({
             id: nextId++,
             de: "jarvis",
@@ -314,7 +318,7 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
           if (d.navegar) navigate(d.navegar);
           decir(d.respuesta);
         } else {
-          const d = await postIA("/api/ia/chat", { mensaje: pregunta, historial });
+          const d = await postIA("/api/ia/chat", { mensaje: pregunta, historial, contexto });
           agregarMensaje({
             id: nextId++,
             de: "jarvis",
@@ -345,7 +349,7 @@ export default function JarvisPanel({ onCerrar }: { onCerrar?: () => void }) {
         if (siguiente) enviar(siguiente);
       }
     },
-    [agregarMensaje, decir, navigate, forzado, pararTodo],
+    [agregarMensaje, decir, navigate, location.pathname, location.search, forzado, pararTodo],
   );
 
   function onSubmit(e: FormEvent) {

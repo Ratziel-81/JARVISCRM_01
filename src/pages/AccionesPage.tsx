@@ -24,6 +24,7 @@ import {
   type TipoAccion,
 } from "../data/mockData";
 import { api } from "../lib/api";
+import { useFijarContextoIA } from "../lib/contextoIA";
 import { fmtFecha } from "../lib/cobertura";
 
 const TIPOS: ("Todas" | TipoAccion)[] = ["Todas", "llamada", "reunion", "visita", "tarea"];
@@ -114,6 +115,7 @@ export default function AccionesPage() {
   }, []);
 
   const selected = useMemo(() => acciones.find((a) => a.id === selectedId) ?? null, [acciones, selectedId]);
+  useFijarContextoIA("accion", selected?.id, selected?.titulo);
 
   function abrirDetalle(a: Accion) {
     setEdit({

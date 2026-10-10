@@ -3,6 +3,9 @@
 // CEREBRO (qwen3.5, con thinking): piensa, consulta la BD con herramientas,
 // organiza la agenda y propone próximos pasos. La VOZ presenta el resultado.
 import { db } from "./db.js";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const OLLAMA_URL = process.env.OLLAMA_URL ?? "http://localhost:11434";
 const VOZ = process.env.IA_RAPIDO ?? "qwen3:1.7b";
@@ -275,9 +278,22 @@ const TOOLS = [
   { type: "function", function: { name: "crear_accion", description: "Crea una llamada, reunión, visita o tarea con fecha y hora. Si falta la hora, PREGUNTA antes de crear (no la inventes).", parameters: { type: "object", properties: { tipo: { type: "string", description: "llamada, reunion, visita o tarea" }, titulo: { type: "string" }, empresa: { type: "string" }, fecha: { type: "string", description: "YYYY-MM-DD (usa resolver_fecha)" }, hora: { type: "string", description: "HH:MM, solo si el usuario la dijo" }, detalle: { type: "string" } }, required: ["tipo", "fecha"] } } },
   { type: "function", function: { name: "ir_a", description: "Lleva al usuario a una parte de la app. Úsala cuando pida abrir, ver o ir a un módulo. Para la pantalla de crear cliente usa /clientes?nuevo=1.", parameters: { type: "object", properties: { ruta: { type: "string", description: "una de: /, /dashboard, /clientes, /clientes?nuevo=1, /oportunidades, /ofertas, /acciones, /calendario, /tareas, /kpis, /informes, /configuracion" } }, required: ["ruta"] } } },
   { type: "function", function: { name: "abrir_cliente", description: "Abre la ficha de un cliente por su nombre o empresa. Si hay varios candidatos, pregunta cuál.", parameters: { type: "object", properties: { q: { type: "string", description: "nombre o empresa a buscar" } }, required: ["q"] } } },
+  { type: "function", function: { name: "actualizar_cliente", description: "Modifica el cliente visible (o el id dado): nombre, empresa, razón social, email, teléfono, estado, valor. Si no te dan id, se usa el de la pantalla.", parameters: { type: "object", properties: { id: { type: "string" }, nombre: { type: "string" }, empresa: { type: "string" }, razonSocial: { type: "string" }, email: { type: "string" }, telefono: { type: "string" }, estado: { type: "string" }, valor: { type: "number" } } } } },
+  { type: "function", function: { name: "borrar_cliente", description: "Borra un cliente. Flujo OBLIGATORIO en 2 pasos: 1) llámala SIN confirmado para obtener la pregunta exacta y haz ESA pregunta al usuario; 2) solo cuando diga sí/vale/confirmo, vuelve a llamarla CON confirmado:true. PROHIBIDO borrar sin el sí.", parameters: { type: "object", properties: { id: { type: "string" }, confirmado: { type: "boolean" } } } } },
+  { type: "function", function: { name: "actualizar_accion", description: "Modifica la acción visible (o el id dado): título, fecha, hora, detalle, estado, prioridad, responsable.", parameters: { type: "object", properties: { id: { type: "string" }, titulo: { type: "string" }, fecha: { type: "string" }, hora: { type: "string" }, detalle: { type: "string" }, estado: { type: "string" }, prioridad: { type: "string" }, responsable: { type: "string" } } } } },
+  { type: "function", function: { name: "borrar_accion", description: "Borra una acción. Flujo OBLIGATORIO en 2 pasos: 1) llámala SIN confirmado para obtener la pregunta exacta y haz ESA pregunta; 2) solo con el sí, repite CON confirmado:true. PROHIBIDO borrar sin el sí.", parameters: { type: "object", properties: { id: { type: "string" }, confirmado: { type: "boolean" } } } } },
+  { type: "function", function: { name: "crear_oportunidad", description: "Crea una oportunidad. La empresa sale del cliente visible si no te la dan.", parameters: { type: "object", properties: { empresa: { type: "string" }, importe: { type: "number" }, prioridad: { type: "string" }, probabilidad: { type: "number" } } } } },
+  { type: "function", function: { name: "crear_oferta", description: "Crea una versión en Borrador en la oportunidad visible (o la dada).", parameters: { type: "object", properties: { oportunidadId: { type: "string" }, titulo: { type: "string" }, importe: { type: "number" }, fechaVencimiento: { type: "string" } }, required: ["titulo"] } } },
+  { type: "function", function: { name: "cerrar_oportunidad", description: "Cierra la oportunidad visible (o la dada) como Ganada o Perdida, con motivo opcional.", parameters: { type: "object", properties: { id: { type: "string" }, resultado: { type: "string", description: "Ganada o Perdida" }, motivo: { type: "string" } }, required: ["resultado"] } } },
+  { type: "function", function: { name: "reabrir_oportunidad", description: "Reabre la oportunidad visible (o la dada) si está Ganada o Perdida.", parameters: { type: "object", properties: { id: { type: "string" } } } } },
 ];
 
-async function ejecutarHerramienta(name, args = {}) {
+async function ejecutarHerramienta(name, args = {}, ctx = {}) {
+  // id por defecto: lo que el usuario tiene en pantalla
+  const idCtx = (...tipos) => {
+    const e = ctx?.entidad;
+    return e && tipos.includes(e.tipo) ? e.id : null;
+  };
   switch (name) {
     case "resumen_cartera":
       return resumenCartera();
@@ -363,6 +379,121 @@ async function ejecutarHerramienta(name, args = {}) {
       if (cands.length === 1) return { navegar: `/clientes/${cands[0].id}`, cliente: cands[0].nombre };
       return { candidatos: cands.map((c) => ({ id: c.id, nombre: c.nombre, empresa: c.empresa })), indica: "hay varios candidatos: pregunta al usuario cuál quiere abrir" };
     }
+    case "actualizar_cliente": {
+      const id = args.id || idCtx("cliente");
+      if (!id) return { error: "no sé qué cliente: pide cuál o abre su ficha" };
+      const cur = db.prepare("SELECT * FROM clientes WHERE id=?").get(id);
+      if (!cur) return { error: "ese cliente no existe" };
+      const cambios = {};
+      for (const k of ["nombre", "empresa", "razonSocial", "email", "telefono", "estado", "valor"]) {
+        if (args[k] !== undefined) cambios[k] = args[k];
+      }
+      if (Object.keys(cambios).length === 0) return { error: "no me dices qué cambiar" };
+      const col = { nombre: "nombre", empresa: "empresa", razonSocial: "razon_social", email: "email", telefono: "telefono", estado: "estado", valor: "valor" };
+      const set = Object.keys(cambios).map((k) => `${col[k]}=?`).join(", ");
+      const vals = Object.keys(cambios).map((k) => (k === "valor" ? Number(cambios[k]) || 0 : cambios[k]));
+      db.prepare(`UPDATE clientes SET ${set} WHERE id=?`).run(...vals, id);
+      return { actualizado: true, id, cambios };
+    }
+    case "borrar_cliente": {
+      const id = args.id || idCtx("cliente");
+      if (!id) return { error: "no sé qué cliente: pide cuál o abre su ficha" };
+      const cur = db.prepare("SELECT id, nombre FROM clientes WHERE id=?").get(id);
+      if (!cur) return { error: "ese cliente no existe" };
+      if (!args.confirmado) return { necesita_confirmacion: true, pregunta: `¿Confirmas que borre a ${cur.nombre}? Se borrarán también sus contactos.` };
+      db.prepare("UPDATE acciones SET cliente_id=NULL WHERE cliente_id=?").run(id);
+      db.prepare("DELETE FROM contactos WHERE cliente_id=?").run(id);
+      db.prepare("DELETE FROM clientes WHERE id=?").run(id);
+      return { borrado: true, id, nombre: cur.nombre, navegar: "/clientes" };
+    }
+    case "actualizar_accion": {
+      const id = args.id || idCtx("accion");
+      if (!id) return { error: "no sé qué acción: pide cuál o ábrela" };
+      const cur = db.prepare("SELECT * FROM acciones WHERE id=?").get(id);
+      if (!cur) return { error: "esa acción no existe" };
+      const col = { titulo: "titulo", fecha: "fecha", hora: "hora", detalle: "detalle", estado: "estado", prioridad: "prioridad", responsable: "responsable" };
+      const cambios = Object.keys(col).filter((k) => args[k] !== undefined);
+      if (cambios.length === 0) return { error: "no me dices qué cambiar" };
+      if (args.estado && !["Pendiente", "Hecha", "Cancelada"].includes(args.estado)) return { error: "estado inválido" };
+      if (args.fecha && !/^\d{4}-\d{2}-\d{2}$/.test(args.fecha)) return { error: "fecha inválida: usa resolver_fecha" };
+      db.prepare(`UPDATE acciones SET ${cambios.map((k) => `${col[k]}=?`).join(", ")} WHERE id=?`).run(...cambios.map((k) => args[k]), id);
+      return { actualizado: true, id, cambios };
+    }
+    case "borrar_accion": {
+      const id = args.id || idCtx("accion");
+      if (!id) return { error: "no sé qué acción: pide cuál o ábrela" };
+      const cur = db.prepare("SELECT id, titulo FROM acciones WHERE id=?").get(id);
+      if (!cur) return { error: "esa acción no existe" };
+      if (!args.confirmado) return { necesita_confirmacion: true, pregunta: `¿Confirmas que borre "${cur.titulo}"?` };
+      const fotos = db.prepare("SELECT archivo FROM accion_fotos WHERE accion_id=?").all(id);
+      const dir = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "data", "fotos");
+      fotos.forEach((f) => {
+        try {
+          fs.unlinkSync(path.join(dir, f.archivo));
+        } catch { /* ya borrada */ }
+      });
+      db.prepare("DELETE FROM accion_fotos WHERE accion_id=?").run(id);
+      db.prepare("DELETE FROM acciones WHERE id=?").run(id);
+      return { borrado: true, id, titulo: cur.titulo };
+    }
+    case "crear_oportunidad": {
+      let empresa = args.empresa;
+      if (!empresa && idCtx("cliente")) {
+        const c = db.prepare("SELECT nombre, empresa FROM clientes WHERE id=?").get(idCtx("cliente"));
+        empresa = c?.empresa || c?.nombre;
+      }
+      if (!empresa?.trim()) return { error: "falta la empresa: pregúntala" };
+      const id = `op-${Date.now().toString(36)}`;
+      db.prepare(
+        "INSERT INTO oportunidades (id,empresa,importe,prioridad,etapa,avatar_color,iniciales,probabilidad,estado,oferta_activa_id,fecha_cierre,motivo) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+      ).run(id, empresa.trim(), Number(args.importe ?? 0) || 0, args.prioridad ?? "Media", "prospeccion", "#0ea5e9",
+        empresa.trim().slice(0, 2).toUpperCase(), Number(args.probabilidad ?? 20) || 0, "Abierta", null, null, "");
+      return { creado: true, id, empresa: empresa.trim(), navegar: `/oportunidades?sel=${id}` };
+    }
+    case "crear_oferta": {
+      const opId = args.oportunidadId || idCtx("oportunidad");
+      if (!opId) return { error: "no sé en qué oportunidad: pide cuál o ábrela" };
+      const op = db.prepare("SELECT * FROM oportunidades WHERE id=?").get(opId);
+      if (!op) return { error: "esa oportunidad no existe" };
+      if (op.estado !== "Abierta") return { error: `la oportunidad está ${op.estado.toLowerCase()}` };
+      if (!args.titulo?.trim()) return { error: "falta el título de la oferta: pregúntalo" };
+      const numero = (db.prepare("SELECT COALESCE(MAX(numero),0) AS m FROM ofertas WHERE oportunidad_id=?").get(opId).m) + 1;
+      const id = `of-${Date.now().toString(36)}`;
+      db.prepare(
+        "INSERT INTO ofertas (id,oportunidad_id,numero,titulo,importe,prioridad,estado,fecha_envio,fecha_vencimiento,notas) VALUES (?,?,?,?,?,?,?,?,?,?)",
+      ).run(id, opId, numero, args.titulo.trim(), Number(args.importe ?? op.importe ?? 0) || 0, op.prioridad ?? "Media",
+        "Borrador", null, args.fechaVencimiento ?? null, "");
+      return { creado: true, id, numero, titulo: args.titulo.trim(), navegar: `/oportunidades?sel=${opId}` };
+    }
+    case "cerrar_oportunidad": {
+      const id = args.id || idCtx("oportunidad");
+      if (!id) return { error: "no sé qué oportunidad: pide cuál o ábrela" };
+      const op = db.prepare("SELECT * FROM oportunidades WHERE id=?").get(id);
+      if (!op) return { error: "esa oportunidad no existe" };
+      if (op.estado !== "Abierta") return { error: `ya está ${op.estado.toLowerCase()}` };
+      const hoy = hoyISO();
+      if (args.resultado === "Ganada") {
+        if (!op.oferta_activa_id) return { error: "para ganar necesita una oferta activa" };
+        db.prepare("UPDATE ofertas SET estado='Aceptada' WHERE id=?").run(op.oferta_activa_id);
+        db.prepare("UPDATE oportunidades SET estado='Ganada', etapa='cierre', probabilidad=100, fecha_cierre=? WHERE id=?").run(hoy, id);
+      } else if (args.resultado === "Perdida") {
+        const act = op.oferta_activa_id ? db.prepare("SELECT * FROM ofertas WHERE id=?").get(op.oferta_activa_id) : null;
+        if (act && ["Borrador", "Enviada"].includes(act.estado)) db.prepare("UPDATE ofertas SET estado='Rechazada' WHERE id=?").run(act.id);
+        db.prepare("UPDATE oportunidades SET estado='Perdida', probabilidad=0, fecha_cierre=?, motivo=?, oferta_activa_id=NULL WHERE id=?").run(hoy, args.motivo ?? "", id);
+      } else {
+        return { error: "resultado: Ganada o Perdida" };
+      }
+      return { cerrado: true, id, resultado: args.resultado, navegar: `/oportunidades?sel=${id}` };
+    }
+    case "reabrir_oportunidad": {
+      const id = args.id || idCtx("oportunidad");
+      if (!id) return { error: "no sé qué oportunidad: pide cuál o ábrela" };
+      const op = db.prepare("SELECT * FROM oportunidades WHERE id=?").get(id);
+      if (!op) return { error: "esa oportunidad no existe" };
+      if (op.estado === "Abierta") return { error: "ya está abierta" };
+      db.prepare("UPDATE oportunidades SET estado='Abierta', fecha_cierre=NULL, motivo='' WHERE id=?").run(id);
+      return { reabierta: true, id, navegar: `/oportunidades?sel=${id}` };
+    }
     default:
       return { error: `herramienta desconocida: ${name}` };
   }
@@ -432,11 +563,20 @@ export async function dormirIA() {
   return { dormidos };
 }
 
-// ---------- VOZ: respuesta instantánea con resumen de contexto ----------
-export async function voz(mensaje, historial = [], signal) {
+// ---------- contexto de pantalla ----------
+// Contexto de pantalla: dónde mira el usuario (ruta + entidad visible).
+function describeContexto(contexto = {}) {
+  const ruta = contexto?.ruta ?? "/";
+  const e = contexto?.entidad;
+  if (e && e.id) return `${ruta} viendo ${e.tipo} "${e.nombre ?? e.id}" (id ${e.id})`;
+  return `${ruta} (sin ficha abierta)`;
+}
+export async function voz(mensaje, historial = [], signal, contexto = {}) {
   const ctx = resumenCartera();
+  const donde = describeContexto(contexto);
   const system = `Eres la VOZ de J.A.R.V.I.S. CRM, hablas con un comercial. Respuestas de 2 a 4 líneas, directas y accionables, en español.
 Foto de la cartera hoy: ${ctx.clientes} clientes, ${ctx.oportunidades_abiertas} oportunidades abiertas por ${ctx.pipeline_eur}€, ${ctx.ofertas_activas} ofertas activas, ${ctx.tareas_pendientes} tareas pendientes, ${ctx.acciones_hoy} acciones hoy.
+El usuario está viendo: ${donde}. Tenlo en cuenta al responder.
 Si te piden análisis profundo, agenda u ofertas a medida, sugiere usar el CEREBRO.`;
   const messages = [
     { role: "system", content: system },
@@ -461,10 +601,11 @@ También puedes buscar información externa en internet (buscar_web) y leer pág
 REGLA: si el usuario pide explícitamente buscar en internet, leer una página o datos actuales/externos, USA OBLIGATORIAMENTE buscar_web o leer_web antes de responder. No respondas de memoria cuando te pidan consultar la web.
 Hoy es ${hoyISO()}. Responde en español, estructurado con titulares y bullets, máximo 250 palabras.`;
 
-export async function cerebro(pregunta, historial = [], signal) {
+export async function cerebro(pregunta, historial = [], signal, contexto = {}) {
   const t0 = Date.now();
+  const donde = describeContexto(contexto);
   const messages = [
-    { role: "system", content: SISTEMA_CEREBRO },
+    { role: "system", content: `${SISTEMA_CEREBRO}\nCONTEXTO ACTUAL: el usuario está viendo ${donde}. Si pide añadir, modificar o eliminar algo sin decir qué ni dónde, presupón que es sobre lo visible (p. ej. "cámbiale el teléfono" = ese cliente; "bórrala" = esa acción/oportunidad; "añade una oferta" = a esa oportunidad). Solo pregunta si es ambiguo.` },
     ...historial.slice(-8).map((h) => ({ role: h.rol === "yo" ? "user" : "assistant", content: h.texto })),
     { role: "user", content: pregunta },
   ];
@@ -488,7 +629,7 @@ export async function cerebro(pregunta, historial = [], signal) {
       usadas.push(c.function.name);
       let resultado;
       try {
-        resultado = await ejecutarHerramienta(c.function.name, c.function.arguments ?? {});
+        resultado = await ejecutarHerramienta(c.function.name, c.function.arguments ?? {}, contexto);
       } catch (e) {
         resultado = { error: `la herramienta ${c.function.name} falló: ${e.message}` };
       }

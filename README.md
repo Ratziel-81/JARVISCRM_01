@@ -101,11 +101,16 @@ VRAM; despiertan solos al usarlos). El panel J.A.R.V.I.S. tiene selector
 grande), navega por voz ("abre clientes", "ve al calendario") y lee las
 respuestas en voz alta. Clic en un cliente abre su **ficha** (`/clientes/:id`)
 con KPIs, oportunidades, ofertas y acciones filtrados más botones para crear
-oportunidad, oferta y acción. El CEREBRO dispone de 14 herramientas: 8 de lectura
-sobre la BD, `buscar_web` y `leer_web`, más `resolver_fecha` (fechas en
+oportunidad, oferta y acción. El CEREBRO dispone de 22 herramientas: 8 de lectura
+sobre la BD, `buscar_web` y `leer_web`, `resolver_fecha` (fechas en
 palabras como "el jueves"), `crear_cliente`, `crear_accion` (llamadas,
-reuniones, visitas, tareas) e `ir_a` (navegación). Si falta un dato (p. ej. la
-hora), lo pregunta y completa en el turno siguiente con el contexto. Botón de oreja para **manos libres**: escucha en
+reuniones, visitas, tareas), `crear_oportunidad`, `crear_oferta`,
+`actualizar_cliente`, `borrar_cliente`, `actualizar_accion`, `borrar_accion`
+(los borrados piden confirmación primero), `cerrar_oportunidad`,
+`reabrir_oportunidad`, `abrir_cliente` e `ir_a` (navegación). Recibe el contexto
+de pantalla (ruta + ficha visible) y presupone que añadir, modificar o eliminar
+se refiere a lo mostrado salvo que le digas otra cosa. Si falta un dato
+(p. ej. la hora), lo pregunta y completa en el turno siguiente con el contexto. Botón de oreja para **manos libres**: escucha en
 continuo y solo reacciona al oír "JARVIS" (confirma con "Dime", capta el
 comando tras 2,5 s de silencio y lo ejecuta).
 

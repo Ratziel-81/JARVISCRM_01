@@ -23,6 +23,7 @@ import {
   type Oportunidad,
 } from "../data/mockData";
 import { api } from "../lib/api";
+import { useFijarContextoIA } from "../lib/contextoIA";
 import { fmtFecha } from "../lib/cobertura";
 
 type FiltroEstado = "Todas" | "Abiertas" | "Ganadas" | "Perdidas";
@@ -87,6 +88,7 @@ export default function OportunidadesPage() {
     () => oportunidades.find((o) => o.id === (selectedId ?? params.get("sel"))) ?? null,
     [oportunidades, selectedId, params],
   );
+  useFijarContextoIA("oportunidad", selected?.id, selected?.empresa);
   const versiones = useMemo(
     () => ofertas.filter((o) => o.oportunidadId === selectedId).sort((a, b) => (a.numero ?? 0) - (b.numero ?? 0)),
     [ofertas, selectedId],
